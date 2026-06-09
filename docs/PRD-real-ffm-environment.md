@@ -2,7 +2,7 @@
 
 ## Problem Statement
 
-C1 proved that Jamie's local WSL / GTX 1070 machine can build and train a PufferLib environment. That proof used a provisional shim, dummy reward, no real renderer, and a small debug grid. It proved the local toolchain, not the actual experiment.
+C1 proved that Jamie's local WSL / GTX 1070 machine can build and train a PufferLib environment. That proof used a provisional shim, dummy reward, no real raylib renderer, and a small debug grid. It proved the local build/train/toolchain path, not the actual experiment or eval visuals.
 
 The project now needs the real forest-fire environment spine: unmanaged FFM physics, whole-fire cluster measurement, reproducible logging, and baseline smoke gates. Without that, training a ranger would only optimize against guessed dynamics and fake success signals.
 
@@ -20,7 +20,7 @@ The next slice should produce:
 - whole-fire cluster sizing using 4-neighbor Hoshen-Kopelman labeling over burned masks
 - CSV logs for fire clusters and smoke summaries
 - baseline smoke gates that say whether the unmanaged system is ready for ranger training
-- a clean path to later Puffer binding, agent reward, and switch-point tests
+- a clean path to later Puffer binding, agent reward, optional eval rendering, and switch-point tests
 
 The key product decision: do not polish the C1 shim into “the environment.” Replace it with the real environment spine, then bind it to Puffer once unmanaged behavior is trustworthy.
 
@@ -52,7 +52,7 @@ The key product decision: do not polish the C1 shim into “the environment.” 
 24. As Jamie, I want full-resolution one-hot observation preserved as the starting assumption, so that switch-point structure is not lost by downsampling.
 25. As Jamie, I want local crop observation deferred unless full-grid training is too slow, so that V1 stays simple and faithful.
 26. As Jamie, I want the next Puffer binding to wrap the real environment, so that train smoke proves the actual dynamics rather than a shim.
-27. As Jamie, I want eval/render expectations separated, so that no-op render does not get confused with visual proof.
+27. As Jamie, I want train-smoke, eval-load, and eval-render expectations separated, so that a successful training run is not blocked by missing draw code and a no-op render is not confused with visual proof.
 28. As Jamie, I want switch-point testing deferred until the unmanaged baseline passes, so that the leverage claim rests on a real critical baseline.
 29. As Jamie, I want C0.2 science kept separate from C1 wiring, so that training-method work does not muddy the baseline gates.
 30. As Jamie, I want no constants frozen until measured smoke results justify them, so that early defaults do not become accidental science claims.
@@ -74,7 +74,10 @@ The key product decision: do not polish the C1 shim into “the environment.” 
 - Track overlap explicitly. If quiet-window HK commonly returns multiple connected components, treat the run as a warning/failure for the intended SOC regime.
 - Do not suppress lightning while fires are active. If overlap is too common, tune `f` down rather than changing the physics.
 - Keep live overlap-robust component tracking out of V1 unless batch labeling is proven inadequate.
-- Keep real renderer out of this PRD unless needed for debugging. Text/CSV proof is enough for baseline gates.
+- Keep real renderer out of the unmanaged baseline gate. Text/CSV proof is enough for baseline gates.
+- Treat Puffer train smoke as a build/buffer/wiring proof that does not require raylib draw code.
+- Treat Puffer eval without render as a checkpoint-load/no-immediate-crash smoke when bounded by `timeout`; do not claim it proves visual rendering.
+- Add a real raylib `c_render`/draw path as a separate optional debugging/eval slice after the real Puffer binding exists, unless debugging needs it earlier.
 - Keep final Puffer train binding out of the first implementation pass. Add it only after the unmanaged standalone demo and baseline logs pass.
 - Keep reward shaping out of the unmanaged baseline pass. Reward work starts after baseline dynamics are credible.
 - Keep C0.1 slope/repeatability gates out. Do not restore them as acceptance criteria.
@@ -99,6 +102,7 @@ The key product decision: do not polish the C1 shim into “the environment.” 
 - Add tests that smoke gates warn/fail on high overlap.
 - Add a local-only manual verification path for Jamie's WSL/GTX 1070, but keep VPS verification CPU-only.
 - Treat Puffer build/train as a later integration seam, not as the first proof of environment correctness.
+- Test train smoke, eval checkpoint-load smoke, and eval render smoke as three separate gates: train can pass without rendering; eval-load can pass with no-op/missing render under timeout; visual eval requires real draw code.
 
 ## Out of Scope
 
@@ -106,7 +110,8 @@ The key product decision: do not polish the C1 shim into “the environment.” 
 - Editing `README.md` or the existing umbrella `docs/PRD.md` path without explicit approval.
 - Running Puffer/GPU commands on the VPS.
 - Final reward tuning.
-- Real renderer implementation.
+- Real renderer implementation for the unmanaged baseline gate.
+- Treating Puffer eval visuals as proven before a raylib draw path exists.
 - Agent policy quality claims.
 - Switch-point proof claims.
 - Publication-grade SOC fitting.
@@ -130,5 +135,6 @@ The next work should be gated like this:
 4. Measurement-size unmanaged baseline produces enough whole-fire clusters.
 5. Baseline gates show a plausible heavy-tailed fire-size fingerprint.
 6. Only then begin proper Puffer binding and ranger training.
+7. Add visual eval/render proof separately if needed for debugging or demonstrations; it is not required for train-smoke proof.
 
-The provisional C1 `binding.c` shim proved that Puffer can train on Jamie's machine. It should be treated as a disposable bridge, not a design to preserve.
+The provisional C1 `binding.c` shim proved that Puffer can train on Jamie's machine. It should be treated as a disposable bridge, not a design to preserve. Its no-op `c_render` means C1 is a train/build/buffer proof only; real eval visuals require a later raylib draw implementation.
