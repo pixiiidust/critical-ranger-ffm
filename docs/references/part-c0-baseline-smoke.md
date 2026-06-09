@@ -28,22 +28,6 @@ min_gate_grid_size=128
 
 The summary reports `measurement_grid_gate`. Treat `warn` as a test/debug run only, not as a valid baseline measurement.
 
-The measured critical density may differ from textbook/literature FFM values; for this project it describes this frozen implementation arena and is not a canonical SOC density/exponent claim.
-
-## Frozen arena rule
-
-Part C0.1 freezes the arena constants shared by baseline and future agent comparisons. These must not change between comparison runs:
-
-- `grid_width`
-- `grid_height`
-- `min_gate_grid_size`
-- `connectivity`
-- `p`
-- `f`
-- `warmup_steps`
-
-The frozen reference is `configs/ffm_arena.frozen.ini`. Future agent/eval configs must match it; `compare_arena_constants` in `critical_ranger_ffm.baseline.repeatability` is the guard helper.
-
 ## Warm-up rule
 
 Critical-density estimates use only post-warm-up global tree density samples. Part C0 uses a fixed generous warm-up cutoff from config:
@@ -61,17 +45,6 @@ The summary prints:
 - `critical_density_band_max`
 
 This makes the density estimate auditable and avoids silently measuring the initial transient.
-
-## Repeatability gate
-
-The baseline is accepted as a stable comparison arena only if a same-constants seed sweep passes hard thresholds. The default Part C0.1 gate runs `128x128` with `cluster_target=2000` for each seed and fails if spread is too wide:
-
-- critical-density mean range across seeds must be `<= 0.01`
-- fitted-slope range across seeds must be `<= 0.08`
-- each seed must retain `>= 1.5` fire-size orders of magnitude
-- max multi-component quiet-window rate must be `<= 0.10`
-
-The fitted slope is computed one canonical way: `critical_ranger_ffm.reporting.report_fire_sizes.fit_slope`. Baseline repeatability and future agent comparison must use that shared helper, not an equivalent reimplementation.
 
 ## Commands
 
@@ -91,14 +64,6 @@ Run the default 128x128 measurement-size smoke:
 
 ```bash
 /tmp/ffm_baseline_smoke --config configs/ffm_baseline_smoke.ini
-```
-
-Run the Part C0.1 repeatability sweep:
-
-```bash
-PYTHONPATH=src python3 -m critical_ranger_ffm.baseline.repeatability \
-  --seeds 20260609,20260610,20260611 \
-  --out-dir reports/part-c0-1-repeatability
 ```
 
 Reporter round-trip:
