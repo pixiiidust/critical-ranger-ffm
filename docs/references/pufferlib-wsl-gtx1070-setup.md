@@ -245,9 +245,11 @@ Part A is complete: install, built-in Breakout build, GPU training, and eval/ren
 Propose before implementing:
 
 1. CSV fixture rows for cluster-close events and intervention events.
-2. A small Python/matplotlib reporting script that reads CSV and outputs:
+2. Build baseline logging + plotting now against synthetic/sample data; treat agent, ranger-poke, and control-poke modes as contract-only until the custom env and trained/frozen policy exist.
+3. A small Python/matplotlib reporting script that reads CSV and outputs:
    - log-log fire-size distributions with fitted slopes for baseline vs agent,
    - ranger intervention vs density-matched control shift with spread/error bars,
    - printed summary table with slopes, sample counts, and steps-to-critical-like per mode,
    - small-sample warnings instead of crashes.
-3. A note that Puffer supports `--wandb` for live training graphs, separate from the C env and reporting CSV path.
+4. For this reporting slice, define `steps-to-critical-like` as the first step/window where the run has a stable heavy-tail fit and fitted slope inside the baseline-derived acceptable slope band for N consecutive windows. If N or the slope band is not yet locked by a baseline smoke-test artifact, expose them as config/defaults and label the result provisional.
+5. A note that Puffer supports `--wandb` for live training graphs, separate from the C env and reporting CSV path.
