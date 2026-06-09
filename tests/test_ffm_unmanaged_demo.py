@@ -1,8 +1,12 @@
+import csv
+import json
 import re
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+
+from critical_ranger_ffm.reporting.report_fire_sizes import REQUIRED_CLUSTER_COLUMNS, load_cluster_rows
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -105,6 +109,79 @@ class FfmUnmanagedDemoTests(unittest.TestCase):
         self.assertEqual(first, second)
         step_lines = [line for line in first.splitlines() if re.match(r"step=", line)]
         self.assertGreaterEqual(len(step_lines), 3)
+
+    def test_cluster_csv_and_summary_contract_are_stable_and_parseable(self):
+        out_csv = self.tmp / "clusters.csv"
+        summary_json = self.tmp / "summary.json"
+        completed = self.run_demo(
+            "--config", str(CONFIG),
+            "--run-id", "issue-12-contract",
+            "--clusters-csv", str(out_csv),
+            "--summary-json", str(summary_json),
+            "--grid-width", "6",
+            "--grid-height", "6",
+            "--seed", "1212",
+            "--p", "0.0",
+            "--f", "0.2",
+            "--initial-tree-density", "0.8",
+            "--episode-step-cap", "12",
+            "--smoke-step-cap", "12",
+            "--debug-every", "3",
+        )
+        self.assertIn(f"clusters_csv={out_csv}", completed.stdout)
+        self.assertIn(f"summary_json={summary_json}", completed.stdout)
+
+        self.assertIn("overlap_signal", REQUIRED_CLUSTER_COLUMNS)
+        with out_csv.open(newline="", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle)
+            self.assertEqual(reader.fieldnames, REQUIRED_CLUSTER_COLUMNS)
+        rows = load_cluster_rows(out_csv)
+        self.assertGreater(len(rows), 0)
+        first = rows[0]
+        self.assertEqual(first["run_id"], "issue-12-contract")
+        self.assertEqual(first["seed"], "1212")
+        self.assertEqual(first["mode"], "baseline")
+        self.assertEqual(first["source"], "unmanaged_demo")
+        self.assertIn(first["overlap_signal"], ["single_component", "multi_component"])
+        self.assertGreaterEqual(int(first["quiet_window_component_count"]), 1)
+        self.assertGreaterEqual(float(first["global_tree_density"]), 0.0)
+        self.assertLessEqual(float(first["global_tree_density"]), 1.0)
+
+        summary = json.loads(summary_json.read_text(encoding="utf-8"))
+        self.assertEqual(summary["run_id"], "issue-12-contract")
+        self.assertEqual(summary["seed"], 1212)
+        self.assertEqual(summary["grid_width"], 6)
+        self.assertEqual(summary["grid_height"], 6)
+        self.assertEqual(summary["p"], 0.0)
+        self.assertEqual(summary["f"], 0.2)
+        self.assertEqual(summary["steps_run"], 12)
+        self.assertEqual(summary["closed_cluster_count"], len(rows))
+        self.assertGreaterEqual(summary["cluster_size_max"], summary["cluster_size_min"])
+        self.assertIn("overlap_rate", summary)
+        self.assertIn("overlap_warnings", summary)
+
+    def test_same_seed_replay_writes_identical_cluster_csv_rows(self):
+        def run_once(name):
+            out_csv = self.tmp / f"{name}.csv"
+            summary_json = self.tmp / f"{name}.json"
+            self.run_demo(
+                "--config", str(CONFIG),
+                "--run-id", "deterministic-replay",
+                "--clusters-csv", str(out_csv),
+                "--summary-json", str(summary_json),
+                "--grid-width", "6",
+                "--grid-height", "6",
+                "--seed", "3434",
+                "--p", "0.0",
+                "--f", "0.2",
+                "--initial-tree-density", "0.8",
+                "--episode-step-cap", "12",
+                "--smoke-step-cap", "12",
+                "--debug-every", "4",
+            )
+            return out_csv.read_text(encoding="utf-8")
+
+        self.assertEqual(run_once("a"), run_once("b"))
 
     def test_invalid_config_exits_nonzero_with_clear_error(self):
         bad_config = self.tmp / "bad.ini"

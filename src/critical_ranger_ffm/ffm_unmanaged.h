@@ -58,6 +58,7 @@ int cr_ffm_validate_config(const CrFfmConfig *cfg);
 int cr_ffm_init(CrFfmEnv *env, const CrFfmConfig *cfg);
 void cr_ffm_free(CrFfmEnv *env);
 CrFfmStepResult cr_ffm_step_unmanaged(CrFfmEnv *env);
+CrFfmStepResult cr_ffm_step_unmanaged_with_burned_mask(CrFfmEnv *env, unsigned char *burned_mask);
 int cr_ffm_can_label_fire_clusters(const CrFfmEnv *env);
 int cr_ffm_hk_label_burned_mask(const unsigned char *burned_mask,
                                 int width,

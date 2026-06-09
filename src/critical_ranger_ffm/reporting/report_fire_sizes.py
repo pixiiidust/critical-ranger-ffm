@@ -35,6 +35,7 @@ REQUIRED_CLUSTER_COLUMNS = [
     "f",
     "global_tree_density",
     "quiet_window_component_count",
+    "overlap_signal",
     "pair_id",
     "source",
     "notes",

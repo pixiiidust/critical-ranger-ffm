@@ -41,6 +41,7 @@ class ReportingContractTests(unittest.TestCase):
                 "f": "0.000001",
                 "global_tree_density": "0.55",
                 "quiet_window_component_count": "1",
+                "overlap_signal": "single_component",
                 "source": "synthetic",
             }
         )

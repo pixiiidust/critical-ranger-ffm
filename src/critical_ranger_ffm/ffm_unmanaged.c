@@ -92,6 +92,10 @@ void cr_ffm_free(CrFfmEnv *env) {
 }
 
 CrFfmStepResult cr_ffm_step_unmanaged(CrFfmEnv *env) {
+    return cr_ffm_step_unmanaged_with_burned_mask(env, NULL);
+}
+
+CrFfmStepResult cr_ffm_step_unmanaged_with_burned_mask(CrFfmEnv *env, unsigned char *burned_mask) {
     CrFfmStepResult result;
     memset(&result, 0, sizeof(result));
     if (!env || !env->grid || !env->next) return result;
@@ -99,6 +103,7 @@ CrFfmStepResult cr_ffm_step_unmanaged(CrFfmEnv *env) {
     int w = env->cfg.grid_width;
     int h = env->cfg.grid_height;
     int n = env->cell_count;
+    if (burned_mask) memset(burned_mask, 0, (size_t)n * sizeof(unsigned char));
     result.active_before = cr_ffm_count_state(env->grid, n, CR_FFM_BURNING);
 
     for (int i = 0; i < n; i++) {
@@ -118,6 +123,7 @@ CrFfmStepResult cr_ffm_step_unmanaged(CrFfmEnv *env) {
             int at = cr_ffm_idx(r, c, w);
             unsigned char state = env->grid[at];
             if (state == CR_FFM_BURNING) {
+                if (burned_mask) burned_mask[at] = 1;
                 env->next[at] = CR_FFM_EMPTY;
             } else if (state == CR_FFM_TREE && cr_ffm_has_burning_neighbor(env->grid, r, c, w, h)) {
                 env->next[at] = CR_FFM_BURNING;

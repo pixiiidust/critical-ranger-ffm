@@ -17,7 +17,7 @@
 // Keep this order byte-for-byte compatible with Part B REQUIRED_CLUSTER_COLUMNS.
 static const char *CSV_HEADER =
     "schema_version,run_id,mode,seed,episode_id,step,event_id,cluster_id,fire_size,"
-    "grid_width,grid_height,p,f,global_tree_density,quiet_window_component_count,pair_id,source,notes\n";
+    "grid_width,grid_height,p,f,global_tree_density,quiet_window_component_count,overlap_signal,pair_id,source,notes\n";
 
 typedef struct {
     int grid_width;
@@ -381,7 +381,7 @@ static void write_csv(const Config *cfg, const RowVec *rows) {
     for (int i = 0; i < rows->count; i++) {
         const ClusterRow *r = &rows->items[i];
         fprintf(fp,
-            "%d,%s,baseline,%llu,0,%d,%d,%d,%d,%d,%d,%.10g,%.10g,%.8f,%d,,env,part-c0-unmanaged-baseline\n",
+            "%d,%s,baseline,%llu,0,%d,%d,%d,%d,%d,%d,%.10g,%.10g,%.8f,%d,%s,,env,part-c0-unmanaged-baseline\n",
             cfg->schema_version,
             cfg->run_id,
             (unsigned long long)cfg->seed,
@@ -394,7 +394,8 @@ static void write_csv(const Config *cfg, const RowVec *rows) {
             cfg->p,
             cfg->f,
             r->density,
-            r->component_count);
+            r->component_count,
+            r->component_count > 1 ? "multi_component" : "single_component");
     }
     fclose(fp);
 }
