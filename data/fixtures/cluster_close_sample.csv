@@ -1,53 +1,53 @@
-schema_version,run_id,mode,seed,episode_id,step,event_id,cluster_id,fire_size,grid_width,grid_height,p,f,global_tree_density,quiet_window_component_count,pair_id,source,notes
-1,fixture-baseline,baseline,101,0,1000,1,1,1,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,2000,2,2,1,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,3000,3,3,1,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,4000,4,4,2,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,5000,5,5,2,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,6000,6,6,3,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,7000,7,7,3,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,8000,8,8,5,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,9000,9,9,8,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,10000,10,10,13,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,11000,11,11,21,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,12000,12,12,34,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,13000,13,13,55,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,14000,14,14,89,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,15000,15,15,144,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,16000,16,16,233,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,17000,17,17,377,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-baseline,baseline,101,0,18000,18,18,610,128,128,0.01,0.000001,0.55,1,,synthetic,Part B synthetic baseline fixture
-1,fixture-agent,agent,102,0,1000,1,1,1,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,2000,2,2,1,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,3000,3,3,2,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,4000,4,4,2,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,5000,5,5,3,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,6000,6,6,5,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,7000,7,7,8,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,8000,8,8,13,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,9000,9,9,21,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,10000,10,10,34,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,11000,11,11,55,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,12000,12,12,89,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,13000,13,13,144,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,14000,14,14,233,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,15000,15,15,377,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-agent,agent,102,0,16000,16,16,500,128,128,0.01,0.000001,0.56,1,,synthetic,Part B synthetic agent contract fixture
-1,fixture-ranger,ranger_intervention,201,0,21000,101,1,30,128,128,0.01,0.000001,0.57,1,pair-001,synthetic,downstream ranger fixture mid
-1,fixture-ranger,ranger_intervention,201,0,22000,102,2,45,128,128,0.01,0.000001,0.57,1,pair-001,synthetic,downstream ranger fixture mid
-1,fixture-ranger,ranger_intervention,201,0,23000,103,3,60,128,128,0.01,0.000001,0.57,1,pair-001,synthetic,downstream ranger fixture mid
-1,fixture-control,density_matched_control,201,0,21000,104,1,50,128,128,0.01,0.000001,0.57,1,pair-001,synthetic,downstream control fixture mid
-1,fixture-control,density_matched_control,201,0,22000,105,2,70,128,128,0.01,0.000001,0.57,1,pair-001,synthetic,downstream control fixture mid
-1,fixture-control,density_matched_control,201,0,23000,106,3,90,128,128,0.01,0.000001,0.57,1,pair-001,synthetic,downstream control fixture mid
-1,fixture-ranger,ranger_intervention,201,0,21000,107,1,80,128,128,0.01,0.000001,0.57,1,pair-002,synthetic,downstream ranger fixture high
-1,fixture-ranger,ranger_intervention,201,0,22000,108,2,120,128,128,0.01,0.000001,0.57,1,pair-002,synthetic,downstream ranger fixture high
-1,fixture-ranger,ranger_intervention,201,0,23000,109,3,160,128,128,0.01,0.000001,0.57,1,pair-002,synthetic,downstream ranger fixture high
-1,fixture-control,density_matched_control,201,0,21000,110,1,70,128,128,0.01,0.000001,0.57,1,pair-002,synthetic,downstream control fixture high
-1,fixture-control,density_matched_control,201,0,22000,111,2,95,128,128,0.01,0.000001,0.57,1,pair-002,synthetic,downstream control fixture high
-1,fixture-control,density_matched_control,201,0,23000,112,3,130,128,128,0.01,0.000001,0.57,1,pair-002,synthetic,downstream control fixture high
-1,fixture-ranger,ranger_intervention,201,0,21000,113,1,10,128,128,0.01,0.000001,0.57,1,pair-003,synthetic,downstream ranger fixture low
-1,fixture-ranger,ranger_intervention,201,0,22000,114,2,15,128,128,0.01,0.000001,0.57,1,pair-003,synthetic,downstream ranger fixture low
-1,fixture-ranger,ranger_intervention,201,0,23000,115,3,20,128,128,0.01,0.000001,0.57,1,pair-003,synthetic,downstream ranger fixture low
-1,fixture-control,density_matched_control,201,0,21000,116,1,12,128,128,0.01,0.000001,0.57,1,pair-003,synthetic,downstream control fixture low
-1,fixture-control,density_matched_control,201,0,22000,117,2,18,128,128,0.01,0.000001,0.57,1,pair-003,synthetic,downstream control fixture low
-1,fixture-control,density_matched_control,201,0,23000,118,3,25,128,128,0.01,0.000001,0.57,1,pair-003,synthetic,downstream control fixture low
+schema_version,run_id,mode,seed,episode_id,step,event_id,cluster_id,fire_size,grid_width,grid_height,p,f,global_tree_density,quiet_window_component_count,overlap_signal,pair_id,source,notes
+1,fixture-baseline,baseline,101,0,1000,1,1,1,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,2000,2,2,1,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,3000,3,3,1,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,4000,4,4,2,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,5000,5,5,2,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,6000,6,6,3,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,7000,7,7,3,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,8000,8,8,5,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,9000,9,9,8,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,10000,10,10,13,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,11000,11,11,21,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,12000,12,12,34,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,13000,13,13,55,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,14000,14,14,89,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,15000,15,15,144,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,16000,16,16,233,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,17000,17,17,377,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-baseline,baseline,101,0,18000,18,18,610,128,128,0.01,0.000001,0.55,1,single_component,,synthetic,Part B synthetic baseline fixture
+1,fixture-agent,agent,102,0,1000,1,1,1,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,2000,2,2,1,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,3000,3,3,2,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,4000,4,4,2,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,5000,5,5,3,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,6000,6,6,5,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,7000,7,7,8,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,8000,8,8,13,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,9000,9,9,21,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,10000,10,10,34,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,11000,11,11,55,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,12000,12,12,89,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,13000,13,13,144,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,14000,14,14,233,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,15000,15,15,377,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-agent,agent,102,0,16000,16,16,500,128,128,0.01,0.000001,0.56,1,single_component,,synthetic,Part B synthetic agent contract fixture
+1,fixture-ranger,ranger_intervention,201,0,21000,101,1,30,128,128,0.01,0.000001,0.57,1,single_component,pair-001,synthetic,downstream ranger fixture mid
+1,fixture-ranger,ranger_intervention,201,0,22000,102,2,45,128,128,0.01,0.000001,0.57,1,single_component,pair-001,synthetic,downstream ranger fixture mid
+1,fixture-ranger,ranger_intervention,201,0,23000,103,3,60,128,128,0.01,0.000001,0.57,1,single_component,pair-001,synthetic,downstream ranger fixture mid
+1,fixture-control,density_matched_control,201,0,21000,104,1,50,128,128,0.01,0.000001,0.57,1,single_component,pair-001,synthetic,downstream control fixture mid
+1,fixture-control,density_matched_control,201,0,22000,105,2,70,128,128,0.01,0.000001,0.57,1,single_component,pair-001,synthetic,downstream control fixture mid
+1,fixture-control,density_matched_control,201,0,23000,106,3,90,128,128,0.01,0.000001,0.57,1,single_component,pair-001,synthetic,downstream control fixture mid
+1,fixture-ranger,ranger_intervention,201,0,21000,107,1,80,128,128,0.01,0.000001,0.57,1,single_component,pair-002,synthetic,downstream ranger fixture high
+1,fixture-ranger,ranger_intervention,201,0,22000,108,2,120,128,128,0.01,0.000001,0.57,1,single_component,pair-002,synthetic,downstream ranger fixture high
+1,fixture-ranger,ranger_intervention,201,0,23000,109,3,160,128,128,0.01,0.000001,0.57,1,single_component,pair-002,synthetic,downstream ranger fixture high
+1,fixture-control,density_matched_control,201,0,21000,110,1,70,128,128,0.01,0.000001,0.57,1,single_component,pair-002,synthetic,downstream control fixture high
+1,fixture-control,density_matched_control,201,0,22000,111,2,95,128,128,0.01,0.000001,0.57,1,single_component,pair-002,synthetic,downstream control fixture high
+1,fixture-control,density_matched_control,201,0,23000,112,3,130,128,128,0.01,0.000001,0.57,1,single_component,pair-002,synthetic,downstream control fixture high
+1,fixture-ranger,ranger_intervention,201,0,21000,113,1,10,128,128,0.01,0.000001,0.57,1,single_component,pair-003,synthetic,downstream ranger fixture low
+1,fixture-ranger,ranger_intervention,201,0,22000,114,2,15,128,128,0.01,0.000001,0.57,1,single_component,pair-003,synthetic,downstream ranger fixture low
+1,fixture-ranger,ranger_intervention,201,0,23000,115,3,20,128,128,0.01,0.000001,0.57,1,single_component,pair-003,synthetic,downstream ranger fixture low
+1,fixture-control,density_matched_control,201,0,21000,116,1,12,128,128,0.01,0.000001,0.57,1,single_component,pair-003,synthetic,downstream control fixture low
+1,fixture-control,density_matched_control,201,0,22000,117,2,18,128,128,0.01,0.000001,0.57,1,single_component,pair-003,synthetic,downstream control fixture low
+1,fixture-control,density_matched_control,201,0,23000,118,3,25,128,128,0.01,0.000001,0.57,1,single_component,pair-003,synthetic,downstream control fixture low
