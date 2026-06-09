@@ -53,6 +53,7 @@ CrFfmConfig cr_ffm_default_config(void) {
     cfg.seed = 20260609ULL;
     cfg.initial_tree_density = 0.55;
     cfg.episode_step_cap = 1000;
+    cfg.connectivity = CR_FFM_CONNECTIVITY_4;
     return cfg;
 }
 
@@ -65,6 +66,7 @@ int cr_ffm_validate_config(const CrFfmConfig *cfg) {
     if (cfg->f < 0.0 || cfg->f > 1.0) return 0;
     if (cfg->initial_tree_density < 0.0 || cfg->initial_tree_density > 1.0) return 0;
     if (cfg->episode_step_cap <= 0) return 0;
+    if (cfg->connectivity != CR_FFM_CONNECTIVITY_4) return 0;
     return 1;
 }
 
@@ -131,4 +133,108 @@ CrFfmStepResult cr_ffm_step_unmanaged(CrFfmEnv *env) {
     result.tree_count = cr_ffm_count_state(env->grid, n, CR_FFM_TREE);
     result.truncated = env->step_count >= env->cfg.episode_step_cap;
     return result;
+}
+
+int cr_ffm_can_label_fire_clusters(const CrFfmEnv *env) {
+    if (!env || !env->grid) return 0;
+    return cr_ffm_count_state(env->grid, env->cell_count, CR_FFM_BURNING) == 0;
+}
+
+static int cr_ffm_hk_find(int *parent, int x) {
+    int root = x;
+    while (parent[root] != root) root = parent[root];
+    while (parent[x] != x) {
+        int next = parent[x];
+        parent[x] = root;
+        x = next;
+    }
+    return root;
+}
+
+static void cr_ffm_hk_union(int *parent, int a, int b) {
+    int root_a = cr_ffm_hk_find(parent, a);
+    int root_b = cr_ffm_hk_find(parent, b);
+    if (root_a == root_b) return;
+    if (root_a < root_b) {
+        parent[root_b] = root_a;
+    } else {
+        parent[root_a] = root_b;
+    }
+}
+
+int cr_ffm_hk_label_burned_mask(const unsigned char *burned_mask,
+                                int width,
+                                int height,
+                                int connectivity,
+                                int *labels,
+                                int *component_sizes,
+                                int max_components,
+                                CrFfmClusterSummary *summary) {
+    if (!summary) return 0;
+    memset(summary, 0, sizeof(*summary));
+    if (!burned_mask || width <= 0 || height <= 0) return 0;
+    if (width > 46340 || height > 46340) return 0;
+    if (width > 0 && height > 2147483647 / width) return 0;
+    if (connectivity != CR_FFM_CONNECTIVITY_4) return 0;
+
+    int n = width * height;
+    int *parent = (int *)malloc((size_t)n * sizeof(int));
+    int *root_to_component = (int *)malloc((size_t)n * sizeof(int));
+    int *all_sizes = (int *)calloc((size_t)n, sizeof(int));
+    if (!parent || !root_to_component || !all_sizes) {
+        free(all_sizes);
+        free(root_to_component);
+        free(parent);
+        return 0;
+    }
+
+    for (int i = 0; i < n; i++) {
+        parent[i] = i;
+        root_to_component[i] = -1;
+        if (labels) labels[i] = 0;
+        if (component_sizes && i < max_components) component_sizes[i] = 0;
+    }
+
+    for (int r = 0; r < height; r++) {
+        for (int c = 0; c < width; c++) {
+            int at = cr_ffm_idx(r, c, width);
+            if (!burned_mask[at]) continue;
+            summary->total_burned++;
+            if (c > 0 && burned_mask[cr_ffm_idx(r, c - 1, width)]) {
+                cr_ffm_hk_union(parent, at, cr_ffm_idx(r, c - 1, width));
+            }
+            if (r > 0 && burned_mask[cr_ffm_idx(r - 1, c, width)]) {
+                cr_ffm_hk_union(parent, at, cr_ffm_idx(r - 1, c, width));
+            }
+        }
+    }
+
+    for (int i = 0; i < n; i++) {
+        if (!burned_mask[i]) continue;
+        int root = cr_ffm_hk_find(parent, i);
+        int component = root_to_component[root];
+        if (component < 0) {
+            component = summary->component_count++;
+            root_to_component[root] = component;
+        }
+        if (labels) labels[i] = component + 1;
+        all_sizes[component]++;
+    }
+
+    for (int i = 0; i < summary->component_count; i++) {
+        if (all_sizes[i] > summary->largest_component_size) {
+            summary->largest_component_size = all_sizes[i];
+        }
+        if (component_sizes && i < max_components) {
+            component_sizes[i] = all_sizes[i];
+            summary->sizes_written++;
+        } else if (component_sizes && i >= max_components) {
+            summary->overflowed = 1;
+        }
+    }
+
+    free(all_sizes);
+    free(root_to_component);
+    free(parent);
+    return 1;
 }
