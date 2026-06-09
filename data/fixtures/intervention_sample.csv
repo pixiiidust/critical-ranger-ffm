@@ -1,0 +1,7 @@
+schema_version,pair_id,run_id,mode,seed,episode_id,intervention_step,action_row,action_col,selected_cell_state,effective_intervention,local_fuel_density,density_bucket,matched_control_for_pair_id,post_intervention_seed,downstream_window_steps,source,notes
+1,pair-001,fixture-ranger,ranger_intervention,201,0,20000,4,5,tree,true,0.55,mid,pair-001,777,5000,synthetic,ranger chose tree; effective firebreak
+1,pair-001,fixture-control,density_matched_control,201,0,20000,9,10,tree,true,0.58,mid,pair-001,777,5000,synthetic,density-tercile matched control tree; effective firebreak
+1,pair-002,fixture-ranger,ranger_intervention,201,0,20000,5,6,tree,true,0.82,high,pair-002,777,5000,synthetic,ranger chose tree; effective firebreak
+1,pair-002,fixture-control,density_matched_control,201,0,20000,10,11,tree,true,0.80,high,pair-002,777,5000,synthetic,density-tercile matched control tree; effective firebreak
+1,pair-003,fixture-ranger,ranger_intervention,201,0,20000,6,7,tree,true,0.20,low,pair-003,777,5000,synthetic,ranger chose tree; effective firebreak
+1,pair-003,fixture-control,density_matched_control,201,0,20000,11,12,tree,true,0.24,low,pair-003,777,5000,synthetic,density-tercile matched control tree; effective firebreak

@@ -1,0 +1,11 @@
+{
+  "min_clusters_for_fit": 50,
+  "min_orders_of_magnitude": 1.5,
+  "steps_window_size": 10000,
+  "consecutive_windows_required": 3,
+  "slope_band_min": null,
+  "slope_band_max": null,
+  "baseline_slope_band_half_width": 0.25,
+  "filter_non_effective_interventions": true,
+  "provisional_results": true
+}
