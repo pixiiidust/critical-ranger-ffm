@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Critical Ranger FFM evidence report prototype</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #061018;
+      --panel: rgba(13, 28, 42, 0.88);
+      --panel-strong: rgba(20, 43, 62, 0.96);
+      --cyan: #46e5ff;
+      --orange: #ff9d4d;
+      --green: #73ff9f;
+      --red: #ff5f6d;
+      --muted: #8ca7b7;
+      --line: rgba(70, 229, 255, 0.2);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(70, 229, 255, 0.14), transparent 34rem),
+        radial-gradient(circle at 80% 0%, rgba(255, 157, 77, 0.12), transparent 32rem),
+        linear-gradient(135deg, #03070b, var(--bg));
+      color: #edfaff;
+    }
+    .shell { padding: 28px; display: grid; gap: 20px; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36), inset 0 1px rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+    }
+    .hero-main { padding: 26px; position: relative; }
+    .kicker { color: var(--cyan); text-transform: uppercase; letter-spacing: 0.18em; font-size: 12px; font-weight: 800; }
+    h1 { margin: 10px 0 10px; font-size: clamp(34px, 5vw, 72px); line-height: 0.94; }
+    .boundary { color: #071018; background: var(--orange); display: inline-flex; padding: 8px 12px; border-radius: 999px; font-weight: 900; }
+    .subcopy { color: #b8ceda; max-width: 72ch; line-height: 1.55; }
+    .lab-notes { padding: 20px; display: grid; gap: 12px; }
+    .lab-notes strong { color: var(--green); }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    button {
+      border: 1px solid rgba(70, 229, 255, 0.35);
+      background: rgba(70, 229, 255, 0.08);
+      color: #eefbff;
+      border-radius: 999px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    button[aria-pressed="true"], button:hover { border-color: var(--cyan); box-shadow: 0 0 24px rgba(70, 229, 255, 0.22); }
+    .layout { display: grid; grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.85fr); gap: 20px; }
+    .viewport-wrap { padding: 18px; }
+    .viewport-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; color: var(--muted); margin-bottom: 14px; }
+    #grid-viewport {
+      min-height: 560px;
+      border-radius: 20px;
+      padding: 16px;
+      background: linear-gradient(180deg, rgba(5, 18, 28, 0.9), rgba(2, 8, 13, 0.92));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(28px, 1fr));
+      gap: 8px;
+    }
+    .cell {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
+      transition: transform 220ms ease, filter 220ms ease;
+    }
+    .animating .cell { animation: pulse 1.8s ease-in-out infinite alternate; }
+    .tree { background: linear-gradient(135deg, #174b34, #4ffc8b); }
+    .empty { background: linear-gradient(135deg, #0f1c24, #2c4250); }
+    .burning { background: linear-gradient(135deg, #5a1519, #ff5f6d); }
+    .ranger_intervention { background: linear-gradient(135deg, #0f4d5c, #46e5ff); box-shadow: 0 0 24px rgba(70, 229, 255, 0.45); }
+    .matched_control { background: linear-gradient(135deg, #5f3711, #ff9d4d); box-shadow: 0 0 24px rgba(255, 157, 77, 0.35); }
+    @keyframes pulse { from { filter: saturate(0.82); transform: scale(0.98); } to { filter: saturate(1.18); transform: scale(1.02); } }
+    .side-panels { display: grid; gap: 20px; }
+    #signal-panel, #report-panel { padding: 18px; }
+    .metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .metric-card { padding: 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.045); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .metric-card span { display: block; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+    .metric-card strong { display: block; margin-top: 6px; color: #fff; font-size: 18px; overflow-wrap: anywhere; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; color: #dbeef6; }
+    th, td { border-bottom: 1px solid rgba(255,255,255,0.08); padding: 8px 6px; text-align: left; }
+    th { color: var(--cyan); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .footer-boundary { color: var(--muted); line-height: 1.5; padding: 18px; }
+    @media (max-width: 940px) { .hero, .layout { grid-template-columns: 1fr; } #grid-viewport { min-height: 380px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="panel hero-main">
+        <div class="kicker">dark simulation lab / fixture UI</div>
+        <h1>Critical Ranger FFM evidence report prototype</h1>
+        <p class="boundary">FIXTURE SAMPLE — NOT EVIDENCE</p>
+        <p class="subcopy">This browser prototype uses generated fixture/sample data only. It is evidence presentation design for reviewing report shape, not evidence generation, not a gate result, and not a scientific conclusion.</p>
+        <div class="controls" aria-label="Seed/config controls">
+          <button type="button" id="animation-toggle" aria-pressed="false">Animation toggle</button>
+          <button type="button" data-seed-button="10000">seed 10000</button>
+<button type="button" data-seed-button="10001">seed 10001</button>
+<button type="button" data-seed-button="10002">seed 10002</button>
+<button type="button" data-seed-button="10003">seed 10003</button>
+<button type="button" data-seed-button="10004">seed 10004</button>
+        </div>
+      </div>
+      <aside class="panel lab-notes">
+        <div><strong>Seed/config controls</strong><br />Visible controls expose fixture seed slices and config state.</div>
+        <div><strong>Large grid viewport</strong><br />The forest board stays dominant so the switch-point story is spatial first.</div>
+        <div><strong>Side-by-side signal and report panels</strong><br />Metrics and row details sit next to the simulated board for review.</div>
+        <div><strong>No real experiment output is loaded or required</strong><br />The UI cannot replace paired evidence gates.</div>
+      </aside>
+    </section>
+
+    <section class="layout">
+      <section class="panel viewport-wrap">
+        <div class="viewport-title"><strong>Large grid viewport</strong><span id="active-seed-label">all fixture seeds</span></div>
+        <div id="grid-viewport" role="img" aria-label="Fixture forest grid with ranger intervention and matched control cells"></div>
+      </section>
+      <section class="side-panels">
+        <div class="panel" id="signal-panel">
+          <h2>Signal panel</h2>
+          <div class="metric-grid"><article class="metric-card"><span>valid_pairs</span><strong>8</strong></article>
+<article class="metric-card"><span>attempted_pairs</span><strong>10</strong></article>
+<article class="metric-card"><span>invalid_rate</span><strong>20.0%</strong></article>
+<article class="metric-card"><span>mean_burned_area_avoided</span><strong>4.00</strong></article>
+<article class="metric-card"><span>density_match_diagnostics</span><strong>exact tercile fixture</strong></article>
+<article class="metric-card"><span>runner_invariant_status</span><strong>ok</strong></article>
+<article class="metric-card"><span>replay_status</span><strong>ok</strong></article>
+<article class="metric-card"><span>readout_horizon_steps</span><strong>512</strong></article>
+<article class="metric-card"><span>evidence_label</span><strong>signal_smoke_only</strong></article></div>
+        </div>
+        <div class="panel" id="report-panel">
+          <h2>Report-contract field sample</h2>
+          <table>
+            <thead><tr><th>pair</th><th>seed</th><th>match</th><th>delta</th><th>valid</th></tr></thead>
+            <tbody id="row-table"><tr><td>pair-000</td><td>10000</td><td>exact_tercile</td><td>4</td><td>true</td></tr>
+<tr><td>pair-001</td><td>10001</td><td>exact_tercile</td><td>4</td><td>true</td></tr>
+<tr><td>pair-002</td><td>10002</td><td>exact_tercile</td><td>4</td><td>true</td></tr>
+<tr><td>pair-003</td><td>10003</td><td>exact_tercile</td><td>4</td><td>true</td></tr>
+<tr><td>pair-004</td><td>10004</td><td>exact_tercile</td><td>4</td><td>true</td></tr>
+<tr><td>pair-005</td><td>10000</td><td>exact_tercile</td><td>4</td><td>true</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel footer-boundary">
+      UI boundary: fixture-only presentation. This prototype displays paired CSV/Markdown/JSON contract fields without inventing stronger claims. Future real runs must still pass the explicit evidence gates before anyone treats output as more than smoke/signal review.
+    </section>
+  </main>
+  <script>
+    window.CRITICAL_RANGER_FFM_FIXTURE_UI = {"boundary": "FIXTURE SAMPLE \u2014 NOT EVIDENCE", "grid": [{"col": 0, "row": 0, "state": "burning"}, {"col": 1, "row": 0, "state": "tree"}, {"col": 2, "row": 0, "state": "tree"}, {"col": 3, "row": 0, "state": "empty"}, {"col": 4, "row": 0, "state": "tree"}, {"col": 5, "row": 0, "state": "tree"}, {"col": 6, "row": 0, "state": "tree"}, {"col": 7, "row": 0, "state": "empty"}, {"col": 0, "row": 1, "state": "tree"}, {"col": 1, "row": 1, "state": "empty"}, {"col": 2, "row": 1, "state": "tree"}, {"col": 3, "row": 1, "state": "tree"}, {"col": 4, "row": 1, "state": "tree"}, {"col": 5, "row": 1, "state": "empty"}, {"col": 6, "row": 1, "state": "tree"}, {"col": 7, "row": 1, "state": "tree"}, {"col": 0, "row": 2, "state": "ranger_intervention"}, {"col": 1, "row": 2, "state": "ranger_intervention"}, {"col": 2, "row": 2, "state": "ranger_intervention"}, {"col": 3, "row": 2, "state": "ranger_intervention"}, {"col": 4, "row": 2, "state": "tree"}, {"col": 5, "row": 2, "state": "tree"}, {"col": 6, "row": 2, "state": "empty"}, {"col": 7, "row": 2, "state": "tree"}, {"col": 0, "row": 3, "state": "matched_control"}, {"col": 1, "row": 3, "state": "matched_control"}, {"col": 2, "row": 3, "state": "matched_control"}, {"col": 3, "row": 3, "state": "matched_control"}, {"col": 4, "row": 3, "state": "empty"}, {"col": 5, "row": 3, "state": "tree"}, {"col": 6, "row": 3, "state": "tree"}, {"col": 7, "row": 3, "state": "tree"}, {"col": 0, "row": 4, "state": "tree"}, {"col": 1, "row": 4, "state": "tree"}, {"col": 2, "row": 4, "state": "empty"}, {"col": 3, "row": 4, "state": "tree"}, {"col": 4, "row": 4, "state": "tree"}, {"col": 5, "row": 4, "state": "tree"}, {"col": 6, "row": 4, "state": "empty"}, {"col": 7, "row": 4, "state": "burning"}, {"col": 0, "row": 5, "state": "empty"}, {"col": 1, "row": 5, "state": "tree"}, {"col": 2, "row": 5, "state": "tree"}, {"col": 3, "row": 5, "state": "tree"}, {"col": 4, "row": 5, "state": "empty"}, {"col": 5, "row": 5, "state": "tree"}, {"col": 6, "row": 5, "state": "burning"}, {"col": 7, "row": 5, "state": "empty"}, {"col": 0, "row": 6, "state": "tree"}, {"col": 1, "row": 6, "state": "tree"}, {"col": 2, "row": 6, "state": "empty"}, {"col": 3, "row": 6, "state": "tree"}, {"col": 4, "row": 6, "state": "tree"}, {"col": 5, "row": 6, "state": "burning"}, {"col": 6, "row": 6, "state": "tree"}, {"col": 7, "row": 6, "state": "tree"}, {"col": 0, "row": 7, "state": "empty"}, {"col": 1, "row": 7, "state": "tree"}, {"col": 2, "row": 7, "state": "tree"}, {"col": 3, "row": 7, "state": "empty"}, {"col": 4, "row": 7, "state": "burning"}, {"col": 5, "row": 7, "state": "tree"}, {"col": 6, "row": 7, "state": "tree"}, {"col": 7, "row": 7, "state": "empty"}], "rows": [{"burned_area_avoided_delta": "4", "config_id": "fixture-config-v1", "control_burned_cells": "12", "control_col": "1", "control_density_cells_7x7": "32", "control_density_tercile": "mid", "control_density_trees_7x7": "18", "control_index": "12", "control_living_tree_fraction": "0.580", "control_row": "3", "episode_id": "0", "evidence_label": "signal_smoke_only", "living_tree_fraction_delta": "0.040", "match_quality": "exact_tercile", "pair_id": "pair-000", "protocol_id": "switch-point-test-protocol-v1", "ranger_density_cells_7x7": "32", "ranger_density_tercile": "mid", "ranger_density_trees_7x7": "18", "readout_horizon_steps": "512", "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed": "10000", "timestep": "200", "treatment_burned_cells": "8", "treatment_col": "0", "treatment_index": "8", "treatment_living_tree_fraction": "0.620", "treatment_row": "2", "valid_pair": "true", "validity_reason": "ok"}, {"burned_area_avoided_delta": "4", "config_id": "fixture-config-v1", "control_burned_cells": "13", "control_col": "2", "control_density_cells_7x7": "32", "control_density_tercile": "mid", "control_density_trees_7x7": "18", "control_index": "13", "control_living_tree_fraction": "0.580", "control_row": "3", "episode_id": "0", "evidence_label": "signal_smoke_only", "living_tree_fraction_delta": "0.040", "match_quality": "exact_tercile", "pair_id": "pair-001", "protocol_id": "switch-point-test-protocol-v1", "ranger_density_cells_7x7": "32", "ranger_density_tercile": "mid", "ranger_density_trees_7x7": "18", "readout_horizon_steps": "512", "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed": "10001", "timestep": "201", "treatment_burned_cells": "9", "treatment_col": "1", "treatment_index": "9", "treatment_living_tree_fraction": "0.620", "treatment_row": "2", "valid_pair": "true", "validity_reason": "ok"}, {"burned_area_avoided_delta": "4", "config_id": "fixture-config-v1", "control_burned_cells": "14", "control_col": "3", "control_density_cells_7x7": "32", "control_density_tercile": "mid", "control_density_trees_7x7": "18", "control_index": "14", "control_living_tree_fraction": "0.580", "control_row": "3", "episode_id": "0", "evidence_label": "signal_smoke_only", "living_tree_fraction_delta": "0.040", "match_quality": "exact_tercile", "pair_id": "pair-002", "protocol_id": "switch-point-test-protocol-v1", "ranger_density_cells_7x7": "32", "ranger_density_tercile": "mid", "ranger_density_trees_7x7": "18", "readout_horizon_steps": "512", "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed": "10002", "timestep": "202", "treatment_burned_cells": "10", "treatment_col": "2", "treatment_index": "10", "treatment_living_tree_fraction": "0.620", "treatment_row": "2", "valid_pair": "true", "validity_reason": "ok"}, {"burned_area_avoided_delta": "4", "config_id": "fixture-config-v1", "control_burned_cells": "15", "control_col": "0", "control_density_cells_7x7": "32", "control_density_tercile": "mid", "control_density_trees_7x7": "18", "control_index": "15", "control_living_tree_fraction": "0.580", "control_row": "3", "episode_id": "0", "evidence_label": "signal_smoke_only", "living_tree_fraction_delta": "0.040", "match_quality": "exact_tercile", "pair_id": "pair-003", "protocol_id": "switch-point-test-protocol-v1", "ranger_density_cells_7x7": "32", "ranger_density_tercile": "mid", "ranger_density_trees_7x7": "18", "readout_horizon_steps": "512", "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed": "10003", "timestep": "203", "treatment_burned_cells": "11", "treatment_col": "3", "treatment_index": "11", "treatment_living_tree_fraction": "0.620", "treatment_row": "2", "valid_pair": "true", "validity_reason": "ok"}, {"burned_area_avoided_delta": "4", "config_id": "fixture-config-v1", "control_burned_cells": "16", "control_col": "1", "control_density_cells_7x7": "32", "control_density_tercile": "mid", "control_density_trees_7x7": "18", "control_index": "16", "control_living_tree_fraction": "0.580", "control_row": "3", "episode_id": "0", "evidence_label": "signal_smoke_only", "living_tree_fraction_delta": "0.040", "match_quality": "exact_tercile", "pair_id": "pair-004", "protocol_id": "switch-point-test-protocol-v1", "ranger_density_cells_7x7": "32", "ranger_density_tercile": "mid", "ranger_density_trees_7x7": "18", "readout_horizon_steps": "512", "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed": "10004", "timestep": "204", "treatment_burned_cells": "12", "treatment_col": "0", "treatment_index": "12", "treatment_living_tree_fraction": "0.620", "treatment_row": "2", "valid_pair": "true", "validity_reason": "ok"}, {"burned_area_avoided_delta": "4", "config_id": "fixture-config-v1", "control_burned_cells": "17", "control_col": "2", "control_density_cells_7x7": "32", "control_density_tercile": "mid", "control_density_trees_7x7": "18", "control_index": "17", "control_living_tree_fraction": "0.580", "control_row": "3", "episode_id": "1", "evidence_label": "signal_smoke_only", "living_tree_fraction_delta": "0.040", "match_quality": "exact_tercile", "pair_id": "pair-005", "protocol_id": "switch-point-test-protocol-v1", "ranger_density_cells_7x7": "32", "ranger_density_tercile": "mid", "ranger_density_trees_7x7": "18", "readout_horizon_steps": "512", "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed": "10000", "timestep": "205", "treatment_burned_cells": "13", "treatment_col": "1", "treatment_index": "13", "treatment_living_tree_fraction": "0.620", "treatment_row": "2", "valid_pair": "true", "validity_reason": "ok"}, {"burned_area_avoided_delta": "4", "config_id": "fixture-config-v1", "control_burned_cells": "18", "control_col": "3", "control_density_cells_7x7": "32", "control_density_tercile": "mid", "control_density_trees_7x7": "18", "control_index": "18", "control_living_tree_fraction": "0.580", "control_row": "3", "episode_id": "1", "evidence_label": "signal_smoke_only", "living_tree_fraction_delta": "0.040", "match_quality": "exact_tercile", "pair_id": "pair-006", "protocol_id": "switch-point-test-protocol-v1", "ranger_density_cells_7x7": "32", "ranger_density_tercile": "mid", "ranger_density_trees_7x7": "18", "readout_horizon_steps": "512", "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed": "10001", "timestep": "206", "treatment_burned_cells": "14", "treatment_col": "2", "treatment_index": "14", "treatment_living_tree_fraction": "0.620", "treatment_row": "2", "valid_pair": "true", "validity_reason": "ok"}, {"burned_area_avoided_delta": "4", "config_id": "fixture-config-v1", "control_burned_cells": "19", "control_col": "0", "control_density_cells_7x7": "32", "control_density_tercile": "mid", "control_density_trees_7x7": "18", "control_index": "19", "control_living_tree_fraction": "0.580", "control_row": "3", "episode_id": "1", "evidence_label": "signal_smoke_only", "living_tree_fraction_delta": "0.040", "match_quality": "exact_tercile", "pair_id": "pair-007", "protocol_id": "switch-point-test-protocol-v1", "ranger_density_cells_7x7": "32", "ranger_density_tercile": "mid", "ranger_density_trees_7x7": "18", "readout_horizon_steps": "512", "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed": "10002", "timestep": "207", "treatment_burned_cells": "15", "treatment_col": "3", "treatment_index": "15", "treatment_living_tree_fraction": "0.620", "treatment_row": "2", "valid_pair": "true", "validity_reason": "ok"}, {"burned_area_avoided_delta": "0", "config_id": "fixture-config-v1", "control_burned_cells": "20", "control_col": "1", "control_density_cells_7x7": "", "control_density_tercile": "invalid", "control_density_trees_7x7": "", "control_index": "20", "control_living_tree_fraction": "0.580", "control_row": "3", "episode_id": "1", "evidence_label": "signal_smoke_only", "living_tree_fraction_delta": "0.040", "match_quality": "no_same_tercile_control", "pair_id": "pair-008", "protocol_id": "switch-point-test-protocol-v1", "ranger_density_cells_7x7": "32", "ranger_density_tercile": "mid", "ranger_density_trees_7x7": "18", "readout_horizon_steps": "512", "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed": "10003", "timestep": "208", "treatment_burned_cells": "20", "treatment_col": "0", "treatment_index": "16", "treatment_living_tree_fraction": "0.620", "treatment_row": "2", "valid_pair": "false", "validity_reason": "no_same_tercile_control"}, {"burned_area_avoided_delta": "0", "config_id": "fixture-config-v1", "control_burned_cells": "21", "control_col": "2", "control_density_cells_7x7": "", "control_density_tercile": "invalid", "control_density_trees_7x7": "", "control_index": "21", "control_living_tree_fraction": "0.580", "control_row": "3", "episode_id": "1", "evidence_label": "signal_smoke_only", "living_tree_fraction_delta": "0.040", "match_quality": "no_same_tercile_control", "pair_id": "pair-009", "protocol_id": "switch-point-test-protocol-v1", "ranger_density_cells_7x7": "32", "ranger_density_tercile": "mid", "ranger_density_trees_7x7": "18", "readout_horizon_steps": "512", "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed": "10004", "timestep": "209", "treatment_burned_cells": "21", "treatment_col": "1", "treatment_index": "17", "treatment_living_tree_fraction": "0.620", "treatment_row": "2", "valid_pair": "false", "validity_reason": "no_same_tercile_control"}], "summary": {"attempted_pairs": 10, "config_id": "fixture-config-v1", "density_match_diagnostics": {"all_rows_signal_smoke_only": true, "exact_tercile_match_count": 8, "invalid_reasons": {"no_same_tercile_control": 2}, "mean_match_quality": 1.0, "valid_pair_count": 8}, "evidence_label": "signal_smoke_only", "invalid_pairs": 2, "invalid_rate": 0.2, "mean_burned_area_avoided": 4.0, "median_burned_area_avoided": 4.0, "percent_ranger_avoided_more_burned_area": 100.0, "protocol_id": "switch-point-test-protocol-v1", "readout_horizon_steps": 512, "replay_status": "ok", "run_id": "fixture-paired-signal", "runner_invariant_status": "ok", "schema_version": "1", "seed_schedule": {"pair_count_by_seed": {"10000": 2, "10001": 2, "10002": 2, "10003": 2, "10004": 2}, "seeds": [10000, 10001, 10002, 10003, 10004]}, "uncertainty_interval": {"high": 4.0, "low": 4.0, "method": "fixture_min_max"}, "valid_pairs": 8, "verdict": "pass_signal"}};
+    const fixtureRows = window.CRITICAL_RANGER_FFM_FIXTURE_UI.rows;
+    const fixtureSummary = window.CRITICAL_RANGER_FFM_FIXTURE_UI.summary;
+    const gridCells = window.CRITICAL_RANGER_FFM_FIXTURE_UI.grid;
+    const viewport = document.getElementById('grid-viewport');
+    const label = document.getElementById('active-seed-label');
+
+    function renderGrid(seed) {
+      viewport.replaceChildren();
+      const activeRows = seed ? fixtureRows.filter((row) => row.seed === String(seed)) : fixtureRows;
+      const activeCoords = new Set(activeRows.map((row) => `${row.treatment_row}:${row.treatment_col}`));
+      gridCells.forEach((cell) => {
+        const div = document.createElement('div');
+        const key = `${cell.row}:${cell.col}`;
+        const state = activeCoords.has(key) ? 'ranger_intervention' : cell.state;
+        div.className = `cell ${state}`;
+        div.title = `row ${cell.row}, col ${cell.col} — ${state}`;
+        viewport.appendChild(div);
+      });
+      label.textContent = seed ? `fixture seed ${seed}` : 'all fixture seeds';
+    }
+
+    document.querySelectorAll('[data-seed-button]').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('[data-seed-button]').forEach((item) => item.setAttribute('aria-pressed', 'false'));
+        button.setAttribute('aria-pressed', 'true');
+        renderGrid(button.dataset.seedButton);
+      });
+    });
+
+    document.getElementById('animation-toggle').addEventListener('click', (event) => {
+      const pressed = event.currentTarget.getAttribute('aria-pressed') === 'true';
+      event.currentTarget.setAttribute('aria-pressed', String(!pressed));
+      viewport.classList.toggle('animating', !pressed);
+    });
+
+    renderGrid(null);
+  </script>
+</body>
+</html>
