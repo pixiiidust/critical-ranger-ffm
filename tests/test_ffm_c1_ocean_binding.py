@@ -13,6 +13,7 @@ PUFFER_ENV = REPO / "pufferlib" / "ocean" / "critical_ranger_ffm" / "critical_ra
 PUFFER_ENV_HEADER = REPO / "pufferlib" / "ocean" / "critical_ranger_ffm" / "critical_ranger_ffm.h"
 PUFFER_BINDING = REPO / "pufferlib" / "ocean" / "critical_ranger_ffm" / "binding.c"
 BUILD_DOC = REPO / "docs" / "references" / "pufferlib-c1-real-binding-build.md"
+RENDER_PROOF_DOC = REPO / "docs" / "references" / "pufferlib-eval-render-proof.md"
 
 
 class FfmC1OceanBindingTests(unittest.TestCase):
@@ -32,6 +33,10 @@ class FfmC1OceanBindingTests(unittest.TestCase):
                     "-pedantic",
                     "-I",
                     str(REPO / "src"),
+                    "-I",
+                    str(REPO / "pufferlib" / "ocean" / "critical_ranger_ffm"),
+                    "-I",
+                    str(REPO / "src" / "critical_ranger_ffm" / "ocean"),
                     str(harness),
                     str(BINDING_SOURCE),
                     str(UNMANAGED_SOURCE),
@@ -160,6 +165,129 @@ int main(void) {
                 check=False,
             )
             self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout)
+
+    def test_optional_render_path_draws_categorical_cells_without_mutating_env(self):
+        output = self.compile_and_run_harness(
+            r'''
+#define CRITICAL_RANGER_FFM_ENABLE_RAYLIB_RENDER 1
+#define CRITICAL_RANGER_FFM_RAYLIB_TEST_STUB 1
+#include "critical_ranger_ffm/ocean/ffm_c1_ocean_binding.h"
+
+typedef struct Color { unsigned char r; unsigned char g; unsigned char b; unsigned char a; } Color;
+static const Color BLACK = {0, 0, 0, 255};
+static const Color DARKGRAY = {80, 80, 80, 255};
+static const Color GREEN = {0, 160, 64, 255};
+static const Color ORANGE = {255, 128, 0, 255};
+static int begin_calls = 0;
+static int end_calls = 0;
+static int clear_calls = 0;
+static int empty_cells = 0;
+static int tree_cells = 0;
+static int burning_cells = 0;
+static int outline_cells = 0;
+static void BeginDrawing(void) { begin_calls++; }
+static void EndDrawing(void) { end_calls++; }
+static void ClearBackground(Color color) { if (color.r == BLACK.r && color.g == BLACK.g && color.b == BLACK.b) clear_calls++; }
+static void DrawRectangle(int x, int y, int w, int h, Color color) {
+    (void)x; (void)y; (void)w; (void)h;
+    if (color.r == DARKGRAY.r && color.g == DARKGRAY.g && color.b == DARKGRAY.b) empty_cells++;
+    if (color.r == GREEN.r && color.g == GREEN.g && color.b == GREEN.b) tree_cells++;
+    if (color.r == ORANGE.r && color.g == ORANGE.g && color.b == ORANGE.b) burning_cells++;
+}
+static void DrawRectangleLines(int x, int y, int w, int h, Color color) {
+    (void)x; (void)y; (void)w; (void)h; (void)color;
+    outline_cells++;
+}
+#include "critical_ranger_ffm.h"
+#include <stdio.h>
+
+static int expect(int condition, const char *name) {
+    if (!condition) fprintf(stderr, "FAIL:%s\n", name);
+    return condition;
+}
+
+int main(void) {
+    CriticalRangerFfm env;
+    memset(&env, 0, sizeof(env));
+    FfmC1OceanConfig cfg = ffm_c1_ocean_default_config();
+    cfg.ffm.grid_width = 3;
+    cfg.ffm.grid_height = 1;
+    cfg.ffm.p = 0.0;
+    cfg.ffm.f = 0.0;
+    cfg.ffm.initial_tree_density = 0.0;
+    cfg.ffm.episode_step_cap = 10;
+    int ok = expect(ffm_c1_ocean_init(&env.ocean, &cfg), "init");
+    env.initialized = 1;
+    env.ocean.ffm.grid[0] = CR_FFM_EMPTY;
+    env.ocean.ffm.grid[1] = CR_FFM_TREE;
+    env.ocean.ffm.grid[2] = CR_FFM_BURNING;
+    unsigned char before0 = env.ocean.ffm.grid[0];
+    unsigned char before1 = env.ocean.ffm.grid[1];
+    unsigned char before2 = env.ocean.ffm.grid[2];
+    int step_before = env.ocean.ffm.step_count;
+    float reward_before = 123.0f;
+    float terminal_before = 0.0f;
+    env.rewards = &reward_before;
+    env.terminals = &terminal_before;
+
+    c_render(&env);
+
+    ok &= expect(begin_calls == 1, "begin drawing once");
+    ok &= expect(end_calls == 1, "end drawing once");
+    ok &= expect(clear_calls == 1, "clear background once");
+    ok &= expect(empty_cells == 1, "draw empty cell");
+    ok &= expect(tree_cells == 1, "draw tree cell");
+    ok &= expect(burning_cells == 1, "draw burning cell");
+    ok &= expect(outline_cells == 3, "draw cell outlines");
+    ok &= expect(env.ocean.ffm.grid[0] == before0, "empty state unchanged");
+    ok &= expect(env.ocean.ffm.grid[1] == before1, "tree state unchanged");
+    ok &= expect(env.ocean.ffm.grid[2] == before2, "burning state unchanged");
+    ok &= expect(env.ocean.ffm.step_count == step_before, "step count unchanged");
+    ok &= expect(reward_before == 123.0f, "reward untouched");
+    ok &= expect(terminal_before == 0.0f, "terminal untouched");
+
+    ffm_c1_ocean_free(&env.ocean);
+    if (!ok) return 1;
+    printf("render-isolated-categorical: PASS\n");
+    return 0;
+}
+'''
+        )
+        self.assertIn("render-isolated-categorical: PASS", output)
+
+    def test_puffer_render_source_is_optional_and_not_step_semantics(self):
+        env_header = PUFFER_ENV_HEADER.read_text(encoding="utf-8")
+        self.assertIn("CRITICAL_RANGER_FFM_ENABLE_RAYLIB_RENDER", env_header)
+        self.assertIn("BeginDrawing", env_header)
+        self.assertIn("DrawRectangle", env_header)
+        render_body = env_header.split("void c_render", 1)[1]
+        self.assertNotIn("cr_ffm_step_unmanaged", render_body)
+        self.assertNotIn("ffm_c1_ocean_step", render_body)
+        self.assertNotIn("env->rewards", render_body)
+        self.assertNotIn("env->terminals", render_body)
+        self.assertNotIn("effective_interventions", render_body)
+
+    def test_eval_render_proof_doc_separates_visual_proof_from_train_smoke(self):
+        doc = RENDER_PROOF_DOC.read_text(encoding="utf-8")
+        self.assertIn("Issue #20", doc)
+        self.assertIn("optional raylib render path", doc)
+        self.assertIn("empty", doc)
+        self.assertIn("tree", doc)
+        self.assertIn("burning", doc)
+        self.assertIn("future ranger intervention marker", doc)
+        self.assertIn("does not change physics, RNG, reward, truncation, or logged outputs", doc)
+        self.assertIn("Train smoke from Issue #16", doc)
+        self.assertIn("checkpoint-load smoke", doc)
+        self.assertIn("visual render proof", doc)
+        self.assertIn("one command at a time", doc)
+        self.assertIn("Do not run Puffer, GPU, train, eval, or render commands on the VPS", doc)
+        self.assertIn("ISSUE20_RENDER_SMOKE_EXIT:0", doc)
+        self.assertIn("ISSUE20_RENDER_COMMAND_EXIT:0", doc)
+        self.assertIn("dark gray, green and orange bands", doc)
+        self.assertIn("ISSUE20_RENDER_SMOKE_FRAMES:133", doc)
+        command_blocks = "\n".join(doc.split("```")[1::2])
+        self.assertNotIn("puffer train", command_blocks)
+        self.assertNotIn("puffer eval", command_blocks)
 
     def test_pufferlib_4_build_artifacts_document_real_train_wiring_scope(self):
         config_text = PUFFER_CONFIG.read_text(encoding="utf-8")
