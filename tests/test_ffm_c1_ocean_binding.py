@@ -177,6 +177,8 @@ int main(void) {
         self.assertIn("ffm_c1_ocean_binding.c", env_text)
         self.assertIn("ffm_unmanaged.c", env_text)
         self.assertNotIn("ffm_c1_ocean_provisional", env_text)
+        self.assertIn("ffm_c1_ocean_binding.c", binding_text)
+        self.assertIn("ffm_unmanaged.c", binding_text)
         self.assertIn("#define OBS_SIZE", binding_text)
         self.assertIn("#define ACT_SIZES {128 * 128 + 1}", binding_text)
         self.assertIn("#define OBS_TENSOR_T FloatTensor", binding_text)

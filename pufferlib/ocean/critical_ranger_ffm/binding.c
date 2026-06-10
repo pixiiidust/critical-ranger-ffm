@@ -1,3 +1,5 @@
+#include "ffm_unmanaged.c"
+#include "ffm_c1_ocean_binding.c"
 #include "critical_ranger_ffm.h"
 
 #define OBS_SIZE (128 * 128 * FFM_C1_OCEAN_OBS_CHANNELS)
