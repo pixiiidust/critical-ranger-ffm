@@ -7,14 +7,15 @@ PROTOCOL = REPO / "docs" / "references" / "local-wsl-paired-signal-check-protoco
 
 
 class LocalWslPairedSignalProtocolTests(unittest.TestCase):
-    def test_protocol_blocks_issuing_a_signal_command_until_real_sample_provider_exists(self):
+    def test_protocol_names_reviewed_real_sample_provider_command(self):
         text = PROTOCOL.read_text(encoding="utf-8")
 
         required_phrases = [
-            "Current command status: `blocked_no_real_sample_provider`",
-            "Do not ask Jamie to run a 100-pair signal command yet.",
+            "Current command status: `real_sample_provider_ready_for_review`",
+            "The reviewed provider callable is `critical_ranger_ffm.reporting.local_wsl_sample_provider:build_local_wsl_switch_point_samples`.",
             "fixture artifacts do not count as #38 evidence",
             "must produce paired CSV, Markdown report, and JSON summary from one invocation",
+            "`python3 -m critical_ranger_ffm.reporting.local_wsl_paired_signal_check`",
             "target `100` valid pairs with a `150` attempted-pair cap",
             "local WSL/GTX 1070 only",
             "one command at a time",
