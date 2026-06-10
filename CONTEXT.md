@@ -33,8 +33,8 @@ The same intervention applied at a random cell matched on v1 local fuel density 
 _Avoid_: Random poke, pure-random control, over-matched control
 
 **Local Fuel Density Match**:
-The v1 control-matching rule: choose a control cell at the same timestep with comparable tree density inside the agent's observation window. Density buckets are terciles from the observed distribution, not fixed cutoffs.
-_Avoid_: Fixed 5x5 match, fixed density cutoffs, full state match, continuous matching, density-plus-burn-neighbor match
+The v1 control-matching rule: choose a control cell at the same timestep with comparable tree density inside a fixed `7x7` window around the candidate cell. Density buckets are terciles from the observed distribution, not fixed cutoffs. Exclude the ranger cell itself; if no same-tercile control exists, mark the pair invalid.
+_Avoid_: Pure-random control, fixed density cutoffs, full state match, continuous matching, density-plus-burn-neighbor match, silently widening the match
 
 **Control-of-SOC Experiment**:
 An experiment that adds interventions to a known self-organizing forest-fire model to study whether steering can reveal high-leverage switch points. It is not a classic SOC study where the system is only left alone and measured.
