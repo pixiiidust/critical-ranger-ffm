@@ -58,6 +58,29 @@ Important PufferLib 4.0 quirks from the previous local smoke:
 - GTX 1070 uses `--float` for the native extension build.
 - Do not add `--local` or `--config` to `puffer train critical_ranger_ffm`.
 
+## Local WSL Issue #16 smoke result
+
+Jamie ran the Issue #16 local WSL smoke from `/home/jamie_sim/puffer-work/pufferlib` after pulling PR head `3ed0f09` and staging the PufferLib files into `ocean/critical_ranger_ffm` and `config/critical_ranger_ffm.ini`.
+
+Native extension build result:
+
+- command shape: `bash build.sh critical_ranger_ffm --float`
+- observed build output included: `Built: pufferlib/_C.cpython-312-x86_64-linux-gnu.so`
+- status: `EXT_BUILD_EXIT:0`
+
+Bounded train smoke result:
+
+- command shape: `timeout 90s puffer train critical_ranger_ffm`
+- status: `TRAIN_EXIT:0`
+- Steps: `8.2K`
+- SPS: `1.8K`
+- Env: `critical_ranger_ffm`
+- Detected action shape: `Detected discrete action space with 1 heads`
+- User stats exported: `perf`, `score`, `episode_return`, `episode_length`, and `effective_interventions`
+- `effective_interventions` was present in the Puffer UI output, proving that the real binding log path reached training.
+
+Interpretation: this is build/buffer/wiring proof only. It proves that PufferLib 4.0 can build the native extension, import it, allocate buffers, run the flat action head, step the real FFM binding, and export logs for one short local WSL train smoke. It is not final science, not a reward-quality claim, and not render proof.
+
 ## Eval/render guardrails
 
 A bounded eval checkpoint-load smoke, if run later, must use `timeout` and may only be documented as checkpoint-load/no-immediate-crash.

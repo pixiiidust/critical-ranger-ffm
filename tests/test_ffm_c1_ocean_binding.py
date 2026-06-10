@@ -196,6 +196,11 @@ int main(void) {
         self.assertIn("Do not run Puffer, GPU, train, eval, or render commands on the VPS", doc)
         self.assertIn("not visual eval proof", doc)
         self.assertIn("#20", doc)
+        self.assertIn("EXT_BUILD_EXIT:0", doc)
+        self.assertIn("TRAIN_EXIT:0", doc)
+        self.assertIn("Steps: `8.2K`", doc)
+        self.assertIn("effective_interventions", doc)
+        self.assertIn("build/buffer/wiring proof only", doc)
 
 
 if __name__ == "__main__":
