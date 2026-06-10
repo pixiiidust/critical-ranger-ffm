@@ -84,6 +84,37 @@ typedef struct {
     CrFfmBranchInvariantReason reason;
 } CrFfmBranchInvariantResult;
 
+typedef enum {
+    CR_FFM_DENSITY_TERCILE_INVALID = -1,
+    CR_FFM_DENSITY_TERCILE_LOW = 0,
+    CR_FFM_DENSITY_TERCILE_MID = 1,
+    CR_FFM_DENSITY_TERCILE_HIGH = 2
+} CrFfmDensityTercile;
+
+typedef enum {
+    CR_FFM_CONTROL_MATCH_OK = 0,
+    CR_FFM_CONTROL_MATCH_NULL_ENV = 1,
+    CR_FFM_CONTROL_MATCH_INVALID_RANGER_INDEX = 2,
+    CR_FFM_CONTROL_MATCH_NO_SAME_TERCILE_CONTROL = 3
+} CrFfmControlMatchReason;
+
+typedef struct {
+    int valid;
+    int ranger_index;
+    int control_index;
+    int ranger_density_numerator;
+    int ranger_density_denominator;
+    int control_density_numerator;
+    int control_density_denominator;
+    CrFfmDensityTercile ranger_tercile;
+    CrFfmDensityTercile control_tercile;
+    int total_candidate_count;
+    int same_tercile_candidate_count;
+    CrFfmControlMatchReason invalid_reason;
+    uint64_t seed;
+    int timestep;
+} CrFfmControlMatch;
+
 CrFfmConfig cr_ffm_default_config(void);
 int cr_ffm_validate_config(const CrFfmConfig *cfg);
 int cr_ffm_init(CrFfmEnv *env, const CrFfmConfig *cfg);
@@ -94,6 +125,14 @@ int cr_ffm_restore(CrFfmEnv *env, const CrFfmSnapshot *snapshot);
 int cr_ffm_env_matches_snapshot(const CrFfmEnv *env, const CrFfmSnapshot *snapshot);
 int cr_ffm_replay_tape_init(CrFfmReplayTape *tape, const CrFfmSnapshot *snapshot, int step_count);
 void cr_ffm_replay_tape_free(CrFfmReplayTape *tape);
+int cr_ffm_measure_local_tree_density_7x7(const CrFfmEnv *env,
+                                           int cell_index,
+                                           int *tree_count,
+                                           int *cell_count,
+                                           CrFfmDensityTercile *tercile);
+CrFfmControlMatch cr_ffm_select_density_matched_control(const CrFfmEnv *env,
+                                                        int ranger_index,
+                                                        uint64_t pair_seed);
 CrFfmStepResult cr_ffm_step_unmanaged(CrFfmEnv *env);
 CrFfmStepResult cr_ffm_step_unmanaged_with_burned_mask(CrFfmEnv *env, unsigned char *burned_mask);
 CrFfmStepResult cr_ffm_step_unmanaged_with_replay(CrFfmEnv *env, const CrFfmReplayTape *tape, int replay_step, unsigned char *burned_mask);
