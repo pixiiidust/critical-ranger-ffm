@@ -85,9 +85,61 @@ void c_step(CriticalRangerFfm *env) {
     if (step.truncated) c_reset(env);
 }
 
+#ifndef CRITICAL_RANGER_FFM_HAS_RAYLIB_RENDER
+#if defined(CRITICAL_RANGER_FFM_ENABLE_RAYLIB_RENDER)
+#define CRITICAL_RANGER_FFM_HAS_RAYLIB_RENDER 1
+#elif defined(__has_include)
+#if __has_include("raylib.h")
+#define CRITICAL_RANGER_FFM_HAS_RAYLIB_RENDER 1
+#endif
+#endif
+#endif
+
+#ifdef CRITICAL_RANGER_FFM_HAS_RAYLIB_RENDER
+#ifndef CRITICAL_RANGER_FFM_RAYLIB_TEST_STUB
+#include "raylib.h"
+#endif
+#endif
+
+#ifndef CRITICAL_RANGER_FFM_RENDER_CELL_PX
+#define CRITICAL_RANGER_FFM_RENDER_CELL_PX 4
+#endif
+
 void c_render(CriticalRangerFfm *env) {
+#ifndef CRITICAL_RANGER_FFM_HAS_RAYLIB_RENDER
     (void)env;
-    // Intentionally no-op for Issue #16. Real raylib/c_render visual proof is Issue #20.
+    // Issue #20 optional render path is compile-gated so CPU/Puffer builds without raylib stay safe.
+#else
+    if (!env || !env->initialized || !env->ocean.ffm.grid) return;
+
+    const int cell_px = CRITICAL_RANGER_FFM_RENDER_CELL_PX;
+    const int width = env->ocean.ffm.cfg.grid_width;
+    const int height = env->ocean.ffm.cfg.grid_height;
+    const Color empty_color = {80, 80, 80, 255};
+    const Color tree_color = {0, 160, 64, 255};
+    const Color burning_color = {255, 128, 0, 255};
+    const Color unknown_color = {200, 0, 200, 255};
+    const Color outline_color = {24, 24, 24, 255};
+
+    BeginDrawing();
+    ClearBackground(BLACK);
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            int idx = row * width + col;
+            Color color = unknown_color;
+            unsigned char state = env->ocean.ffm.grid[idx];
+            if (state == CR_FFM_EMPTY) color = empty_color;
+            else if (state == CR_FFM_TREE) color = tree_color;
+            else if (state == CR_FFM_BURNING) color = burning_color;
+
+            int x = col * cell_px;
+            int y = row * cell_px;
+            DrawRectangle(x, y, cell_px, cell_px, color);
+            DrawRectangleLines(x, y, cell_px, cell_px, outline_color);
+        }
+    }
+    EndDrawing();
+#endif
 }
 
 void c_close(CriticalRangerFfm *env) {
