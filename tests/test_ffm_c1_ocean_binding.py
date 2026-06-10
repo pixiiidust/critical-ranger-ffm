@@ -10,6 +10,7 @@ BINDING_HEADER = REPO / "src" / "critical_ranger_ffm" / "ocean" / "ffm_c1_ocean_
 UNMANAGED_SOURCE = REPO / "src" / "critical_ranger_ffm" / "ffm_unmanaged.c"
 PUFFER_CONFIG = REPO / "pufferlib" / "config" / "critical_ranger_ffm.ini"
 PUFFER_ENV = REPO / "pufferlib" / "ocean" / "critical_ranger_ffm" / "critical_ranger_ffm.c"
+PUFFER_ENV_HEADER = REPO / "pufferlib" / "ocean" / "critical_ranger_ffm" / "critical_ranger_ffm.h"
 PUFFER_BINDING = REPO / "pufferlib" / "ocean" / "critical_ranger_ffm" / "binding.c"
 BUILD_DOC = REPO / "docs" / "references" / "pufferlib-c1-real-binding-build.md"
 
@@ -125,6 +126,7 @@ int main(void) {
             env_dir.mkdir()
             for source in [
                 PUFFER_ENV,
+                PUFFER_ENV_HEADER,
                 PUFFER_BINDING,
                 UNMANAGED_SOURCE,
                 REPO / "src" / "critical_ranger_ffm" / "ffm_unmanaged.h",
@@ -132,6 +134,14 @@ int main(void) {
                 BINDING_HEADER,
             ]:
                 (env_dir / source.name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+            (env_dir / "vecenv.h").write_text(
+                "typedef float FloatTensor;\n"
+                "typedef struct { float value; } DictValue;\n"
+                "typedef struct Dict Dict;\n"
+                "static DictValue *dict_get(Dict *d, const char *k) { (void)d; (void)k; static DictValue v = {0}; return &v; }\n"
+                "static void dict_set(Dict *d, const char *k, float v) { (void)d; (void)k; (void)v; }\n",
+                encoding="utf-8",
+            )
             completed = subprocess.run(
                 [
                     "cc",
@@ -162,13 +172,17 @@ int main(void) {
         self.assertNotIn("PROVISIONAL", config_text)
 
         env_text = PUFFER_ENV.read_text(encoding="utf-8")
+        env_header = PUFFER_ENV_HEADER.read_text(encoding="utf-8")
         binding_text = PUFFER_BINDING.read_text(encoding="utf-8")
         self.assertIn("ffm_c1_ocean_binding.c", env_text)
         self.assertIn("ffm_unmanaged.c", env_text)
         self.assertNotIn("ffm_c1_ocean_provisional", env_text)
-        self.assertIn("c_render", binding_text)
-        self.assertIn("deferred to Issue #20", binding_text)
-        self.assertIn("not visual eval proof", binding_text)
+        self.assertIn("#define OBS_SIZE", binding_text)
+        self.assertIn("#define ACT_SIZES {128 * 128 + 1}", binding_text)
+        self.assertIn("#define OBS_TENSOR_T FloatTensor", binding_text)
+        self.assertIn("#include \"vecenv.h\"", binding_text)
+        self.assertIn("void c_render", env_header)
+        self.assertIn("Issue #20", env_header)
 
         doc = BUILD_DOC.read_text(encoding="utf-8")
         self.assertIn("pufferlib/config/critical_ranger_ffm.ini", doc)
