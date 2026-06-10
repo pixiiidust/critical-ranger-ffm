@@ -91,6 +91,97 @@ void cr_ffm_free(CrFfmEnv *env) {
     memset(env, 0, sizeof(*env));
 }
 
+static int cr_ffm_config_equal(const CrFfmConfig *a, const CrFfmConfig *b) {
+    if (!a || !b) return 0;
+    return a->grid_width == b->grid_width &&
+           a->grid_height == b->grid_height &&
+           a->p == b->p &&
+           a->f == b->f &&
+           a->seed == b->seed &&
+           a->initial_tree_density == b->initial_tree_density &&
+           a->episode_step_cap == b->episode_step_cap &&
+           a->connectivity == b->connectivity;
+}
+
+int cr_ffm_snapshot_init(CrFfmSnapshot *snapshot, const CrFfmEnv *env) {
+    if (!snapshot || !env || !env->grid || env->cell_count <= 0) return 0;
+    memset(snapshot, 0, sizeof(*snapshot));
+    snapshot->cfg = env->cfg;
+    snapshot->rng = env->rng;
+    snapshot->cell_count = env->cell_count;
+    snapshot->step_count = env->step_count;
+    snapshot->grid = (unsigned char *)malloc((size_t)env->cell_count * sizeof(unsigned char));
+    if (!snapshot->grid) {
+        memset(snapshot, 0, sizeof(*snapshot));
+        return 0;
+    }
+    memcpy(snapshot->grid, env->grid, (size_t)env->cell_count * sizeof(unsigned char));
+    return 1;
+}
+
+void cr_ffm_snapshot_free(CrFfmSnapshot *snapshot) {
+    if (!snapshot) return;
+    free(snapshot->grid);
+    memset(snapshot, 0, sizeof(*snapshot));
+}
+
+int cr_ffm_restore(CrFfmEnv *env, const CrFfmSnapshot *snapshot) {
+    if (!env || !snapshot || !snapshot->grid || !cr_ffm_validate_config(&snapshot->cfg)) return 0;
+    CrFfmEnv restored;
+    memset(&restored, 0, sizeof(restored));
+    restored.cfg = snapshot->cfg;
+    restored.rng = snapshot->rng;
+    restored.cell_count = snapshot->cell_count;
+    restored.step_count = snapshot->step_count;
+    restored.grid = (unsigned char *)malloc((size_t)snapshot->cell_count * sizeof(unsigned char));
+    restored.next = (unsigned char *)calloc((size_t)snapshot->cell_count, sizeof(unsigned char));
+    if (!restored.grid || !restored.next) {
+        free(restored.next);
+        free(restored.grid);
+        return 0;
+    }
+    memcpy(restored.grid, snapshot->grid, (size_t)snapshot->cell_count * sizeof(unsigned char));
+    cr_ffm_free(env);
+    *env = restored;
+    return 1;
+}
+
+int cr_ffm_env_matches_snapshot(const CrFfmEnv *env, const CrFfmSnapshot *snapshot) {
+    if (!env || !snapshot || !env->grid || !snapshot->grid) return 0;
+    if (!cr_ffm_config_equal(&env->cfg, &snapshot->cfg)) return 0;
+    if (env->rng.state != snapshot->rng.state) return 0;
+    if (env->cell_count != snapshot->cell_count) return 0;
+    if (env->step_count != snapshot->step_count) return 0;
+    return memcmp(env->grid, snapshot->grid, (size_t)env->cell_count * sizeof(unsigned char)) == 0;
+}
+
+int cr_ffm_replay_tape_init(CrFfmReplayTape *tape, const CrFfmSnapshot *snapshot, int step_count) {
+    if (!tape || !snapshot || !snapshot->grid || snapshot->cell_count <= 0 || step_count <= 0) return 0;
+    memset(tape, 0, sizeof(*tape));
+    tape->step_count = step_count;
+    tape->cell_count = snapshot->cell_count;
+    size_t count = (size_t)step_count * (size_t)snapshot->cell_count;
+    tape->regrowth_draws = (double *)malloc(count * sizeof(double));
+    tape->lightning_draws = (double *)malloc(count * sizeof(double));
+    if (!tape->regrowth_draws || !tape->lightning_draws) {
+        cr_ffm_replay_tape_free(tape);
+        return 0;
+    }
+    CrFfmRng replay_rng = snapshot->rng;
+    for (size_t i = 0; i < count; i++) {
+        tape->regrowth_draws[i] = cr_ffm_unit(&replay_rng);
+        tape->lightning_draws[i] = cr_ffm_unit(&replay_rng);
+    }
+    return 1;
+}
+
+void cr_ffm_replay_tape_free(CrFfmReplayTape *tape) {
+    if (!tape) return;
+    free(tape->lightning_draws);
+    free(tape->regrowth_draws);
+    memset(tape, 0, sizeof(*tape));
+}
+
 CrFfmStepResult cr_ffm_step_unmanaged(CrFfmEnv *env) {
     return cr_ffm_step_unmanaged_with_burned_mask(env, NULL);
 }
@@ -138,6 +229,92 @@ CrFfmStepResult cr_ffm_step_unmanaged_with_burned_mask(CrFfmEnv *env, unsigned c
     env->step_count++;
     result.tree_count = cr_ffm_count_state(env->grid, n, CR_FFM_TREE);
     result.truncated = env->step_count >= env->cfg.episode_step_cap;
+    return result;
+}
+
+CrFfmStepResult cr_ffm_step_unmanaged_with_replay(CrFfmEnv *env, const CrFfmReplayTape *tape, int replay_step, unsigned char *burned_mask) {
+    CrFfmStepResult result;
+    memset(&result, 0, sizeof(result));
+    if (!env || !env->grid || !env->next || !tape || !tape->regrowth_draws || !tape->lightning_draws) return result;
+    if (replay_step < 0 || replay_step >= tape->step_count || env->cell_count != tape->cell_count) return result;
+
+    int w = env->cfg.grid_width;
+    int h = env->cfg.grid_height;
+    int n = env->cell_count;
+    size_t offset = (size_t)replay_step * (size_t)n;
+    if (burned_mask) memset(burned_mask, 0, (size_t)n * sizeof(unsigned char));
+    result.active_before = cr_ffm_count_state(env->grid, n, CR_FFM_BURNING);
+
+    for (int i = 0; i < n; i++) {
+        if (env->grid[i] == CR_FFM_EMPTY && tape->regrowth_draws[offset + (size_t)i] < env->cfg.p) {
+            env->grid[i] = CR_FFM_TREE;
+            result.regrowths++;
+        }
+        if (env->grid[i] == CR_FFM_TREE && tape->lightning_draws[offset + (size_t)i] < env->cfg.f) {
+            env->grid[i] = CR_FFM_BURNING;
+            result.lightning_ignitions++;
+        }
+    }
+
+    result.active_after = 0;
+    for (int r = 0; r < h; r++) {
+        for (int c = 0; c < w; c++) {
+            int at = cr_ffm_idx(r, c, w);
+            unsigned char state = env->grid[at];
+            if (state == CR_FFM_BURNING) {
+                if (burned_mask) burned_mask[at] = 1;
+                env->next[at] = CR_FFM_EMPTY;
+            } else if (state == CR_FFM_TREE && cr_ffm_has_burning_neighbor(env->grid, r, c, w, h)) {
+                env->next[at] = CR_FFM_BURNING;
+                result.active_after++;
+            } else {
+                env->next[at] = state;
+            }
+        }
+    }
+
+    memcpy(env->grid, env->next, (size_t)n * sizeof(unsigned char));
+    env->step_count++;
+    result.tree_count = cr_ffm_count_state(env->grid, n, CR_FFM_TREE);
+    result.truncated = env->step_count >= env->cfg.episode_step_cap;
+    return result;
+}
+
+CrFfmBranchInvariantResult cr_ffm_check_branch_invariant(const CrFfmEnv *treatment, const CrFfmEnv *control, int allowed_mismatch_index) {
+    CrFfmBranchInvariantResult result;
+    result.valid = 0;
+    result.mismatch_count = 0;
+    result.first_mismatch = -1;
+    result.reason = CR_FFM_BRANCH_INVARIANT_OK;
+
+    if (!treatment || !control || !treatment->grid || !control->grid) {
+        result.reason = CR_FFM_BRANCH_INVARIANT_NULL_ENV;
+        return result;
+    }
+    if (!cr_ffm_config_equal(&treatment->cfg, &control->cfg) || treatment->cell_count != control->cell_count) {
+        result.reason = CR_FFM_BRANCH_INVARIANT_CONFIG_MISMATCH;
+        return result;
+    }
+    if (treatment->rng.state != control->rng.state) {
+        result.reason = CR_FFM_BRANCH_INVARIANT_RNG_MISMATCH;
+        return result;
+    }
+    if (treatment->step_count != control->step_count) {
+        result.reason = CR_FFM_BRANCH_INVARIANT_STEP_MISMATCH;
+        return result;
+    }
+
+    for (int i = 0; i < treatment->cell_count; i++) {
+        if (treatment->grid[i] != control->grid[i]) {
+            if (result.first_mismatch < 0) result.first_mismatch = i;
+            result.mismatch_count++;
+            if (i != allowed_mismatch_index) result.reason = CR_FFM_BRANCH_INVARIANT_GRID_MISMATCH;
+        }
+    }
+
+    if (result.reason == CR_FFM_BRANCH_INVARIANT_OK) {
+        result.valid = result.mismatch_count == 0 || result.mismatch_count == 1;
+    }
     return result;
 }
 
