@@ -2,21 +2,21 @@
 
 This note governs Issue #38: the first 100-pair local WSL signal/smoke review.
 
-Current command status: `blocked_no_real_sample_provider`
+Current command status: `real_sample_provider_ready_for_review`
 
-Do not ask Jamie to run a 100-pair signal command yet.
+The repo now includes the smallest reviewed sample-provider slice for the bridge. The reviewed provider callable is `critical_ranger_ffm.reporting.local_wsl_sample_provider:build_local_wsl_switch_point_samples`.
 
-The repo has the paired runner/report seam and a local WSL command bridge, but it does not yet include the real sample-provider callable that collects real ranger-selected switch-point samples from Jamie's local environment. fixture artifacts do not count as #38 evidence, and VPS-only tests do not count as #38 evidence.
+fixture artifacts do not count as #38 evidence, and VPS-only tests do not count as #38 evidence. The provider compiles a tiny helper against the real unmanaged C environment source (`src/critical_ranger_ffm/ffm_unmanaged.c`), advances real FFM environments, snapshots their grids, and returns `SwitchPointSample` objects for the paired runner. It does not invoke Puffer, GPU training/eval, render, raylib, or `c_render`.
 
-The bridge entry point is `python3 -m critical_ranger_ffm.reporting.local_wsl_paired_signal_check`. It requires a real `MODULE:CALLABLE` sample provider that returns `SwitchPointSample` objects from the local WSL ranger/environment path. Until that provider exists and is reviewed, do not issue the command as #38 evidence.
+The bridge entry point is `python3 -m critical_ranger_ffm.reporting.local_wsl_paired_signal_check`. It now has a concrete real-provider `MODULE:CALLABLE` to replace the old placeholder.
 
-## Reviewed bridge shape once a real provider exists
+## Reviewed bridge command shape
 
 ```bash
-PYTHONPATH=src python3 -m critical_ranger_ffm.reporting.local_wsl_paired_signal_check --sample-provider <real_provider_module>:<collect_samples_callable> --provider-root . --output-dir artifacts/issue38-local-wsl-paired-signal --target-valid-pairs 100 --attempted-pair-cap 150 --readout-horizon-steps 512
+PYTHONPATH=src python3 -m critical_ranger_ffm.reporting.local_wsl_paired_signal_check --sample-provider critical_ranger_ffm.reporting.local_wsl_sample_provider:build_local_wsl_switch_point_samples --provider-root . --output-dir artifacts/issue38-local-wsl-paired-signal --target-valid-pairs 100 --attempted-pair-cap 150 --readout-horizon-steps 512
 ```
 
-This is a command shape, not a runnable #38 instruction yet. Replace the placeholder only with a reviewed real local provider. Do not replace it with fixture or deterministic-only helper providers.
+Do not replace this provider with fixture or deterministic-only helper providers.
 
 ## What must exist before the local command is issued
 
@@ -50,9 +50,7 @@ A #38 result is signal/smoke only. It does not prove ranger efficacy, policy qua
 
 Do not start #39 from this issue. The 500-valid-pair belief gate requires separate explicit Jamie approval.
 
-## Tracker hygiene when a real command exists
-
-When a real local command exists and Jamie runs it:
+## Tracker hygiene when Jamie runs the reviewed command
 
 1. Preserve Jamie's pasted command output in the issue or PR evidence trail.
 2. Record the artifact paths reported by the command.
