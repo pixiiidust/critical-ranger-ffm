@@ -182,6 +182,139 @@ void cr_ffm_replay_tape_free(CrFfmReplayTape *tape) {
     memset(tape, 0, sizeof(*tape));
 }
 
+static CrFfmDensityTercile cr_ffm_density_tercile(int tree_count, int cell_count) {
+    if (cell_count <= 0 || tree_count < 0) return CR_FFM_DENSITY_TERCILE_INVALID;
+    if (tree_count * 3 < cell_count) return CR_FFM_DENSITY_TERCILE_LOW;
+    if (tree_count * 3 < cell_count * 2) return CR_FFM_DENSITY_TERCILE_MID;
+    return CR_FFM_DENSITY_TERCILE_HIGH;
+}
+
+int cr_ffm_measure_local_tree_density_7x7(const CrFfmEnv *env,
+                                           int cell_index,
+                                           int *tree_count,
+                                           int *cell_count,
+                                           CrFfmDensityTercile *tercile) {
+    if (tree_count) *tree_count = 0;
+    if (cell_count) *cell_count = 0;
+    if (tercile) *tercile = CR_FFM_DENSITY_TERCILE_INVALID;
+    if (!env || !env->grid || env->cell_count <= 0) return 0;
+    if (cell_index < 0 || cell_index >= env->cell_count) return 0;
+
+    int w = env->cfg.grid_width;
+    int h = env->cfg.grid_height;
+    if (w <= 0 || h <= 0 || w * h != env->cell_count) return 0;
+
+    int center_row = cell_index / w;
+    int center_col = cell_index % w;
+    int trees = 0;
+    int cells = 0;
+    int min_row = center_row - 3;
+    int max_row = center_row + 3;
+    int min_col = center_col - 3;
+    int max_col = center_col + 3;
+    if (min_row < 0) min_row = 0;
+    if (min_col < 0) min_col = 0;
+    if (max_row >= h) max_row = h - 1;
+    if (max_col >= w) max_col = w - 1;
+
+    for (int r = min_row; r <= max_row; r++) {
+        for (int c = min_col; c <= max_col; c++) {
+            int at = cr_ffm_idx(r, c, w);
+            if (at == cell_index) continue;
+            cells++;
+            if (env->grid[at] == CR_FFM_TREE) trees++;
+        }
+    }
+
+    CrFfmDensityTercile bucket = cr_ffm_density_tercile(trees, cells);
+    if (tree_count) *tree_count = trees;
+    if (cell_count) *cell_count = cells;
+    if (tercile) *tercile = bucket;
+    return bucket != CR_FFM_DENSITY_TERCILE_INVALID;
+}
+
+static CrFfmControlMatch cr_ffm_control_match_init(const CrFfmEnv *env, int ranger_index, uint64_t pair_seed) {
+    CrFfmControlMatch match;
+    memset(&match, 0, sizeof(match));
+    match.valid = 0;
+    match.ranger_index = ranger_index;
+    match.control_index = -1;
+    match.ranger_tercile = CR_FFM_DENSITY_TERCILE_INVALID;
+    match.control_tercile = CR_FFM_DENSITY_TERCILE_INVALID;
+    match.invalid_reason = CR_FFM_CONTROL_MATCH_OK;
+    match.seed = pair_seed;
+    match.timestep = env ? env->step_count : -1;
+    return match;
+}
+
+CrFfmControlMatch cr_ffm_select_density_matched_control(const CrFfmEnv *env,
+                                                        int ranger_index,
+                                                        uint64_t pair_seed) {
+    CrFfmControlMatch match = cr_ffm_control_match_init(env, ranger_index, pair_seed);
+    if (!env || !env->grid || env->cell_count <= 0) {
+        match.invalid_reason = CR_FFM_CONTROL_MATCH_NULL_ENV;
+        return match;
+    }
+    if (ranger_index < 0 || ranger_index >= env->cell_count) {
+        match.invalid_reason = CR_FFM_CONTROL_MATCH_INVALID_RANGER_INDEX;
+        return match;
+    }
+    if (!cr_ffm_measure_local_tree_density_7x7(
+            env,
+            ranger_index,
+            &match.ranger_density_numerator,
+            &match.ranger_density_denominator,
+            &match.ranger_tercile)) {
+        match.invalid_reason = CR_FFM_CONTROL_MATCH_INVALID_RANGER_INDEX;
+        return match;
+    }
+
+    for (int i = 0; i < env->cell_count; i++) {
+        if (i == ranger_index) continue;
+        if (env->grid[i] != CR_FFM_TREE) continue;
+        match.total_candidate_count++;
+
+        int candidate_trees = 0;
+        int candidate_cells = 0;
+        CrFfmDensityTercile candidate_tercile = CR_FFM_DENSITY_TERCILE_INVALID;
+        if (!cr_ffm_measure_local_tree_density_7x7(env, i, &candidate_trees, &candidate_cells, &candidate_tercile)) continue;
+        if (candidate_tercile == match.ranger_tercile) {
+            match.same_tercile_candidate_count++;
+        }
+    }
+
+    if (match.same_tercile_candidate_count <= 0) {
+        match.invalid_reason = CR_FFM_CONTROL_MATCH_NO_SAME_TERCILE_CONTROL;
+        return match;
+    }
+
+    int selected_ordinal = (int)(pair_seed % (uint64_t)match.same_tercile_candidate_count);
+    int seen = 0;
+    for (int i = 0; i < env->cell_count; i++) {
+        if (i == ranger_index) continue;
+        if (env->grid[i] != CR_FFM_TREE) continue;
+
+        int candidate_trees = 0;
+        int candidate_cells = 0;
+        CrFfmDensityTercile candidate_tercile = CR_FFM_DENSITY_TERCILE_INVALID;
+        if (!cr_ffm_measure_local_tree_density_7x7(env, i, &candidate_trees, &candidate_cells, &candidate_tercile)) continue;
+        if (candidate_tercile != match.ranger_tercile) continue;
+        if (seen == selected_ordinal) {
+            match.valid = 1;
+            match.control_index = i;
+            match.control_density_numerator = candidate_trees;
+            match.control_density_denominator = candidate_cells;
+            match.control_tercile = candidate_tercile;
+            match.invalid_reason = CR_FFM_CONTROL_MATCH_OK;
+            return match;
+        }
+        seen++;
+    }
+
+    match.invalid_reason = CR_FFM_CONTROL_MATCH_NO_SAME_TERCILE_CONTROL;
+    return match;
+}
+
 CrFfmStepResult cr_ffm_step_unmanaged(CrFfmEnv *env) {
     return cr_ffm_step_unmanaged_with_burned_mask(env, NULL);
 }
