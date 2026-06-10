@@ -1,5 +1,7 @@
 # Reporting Layer Contract — Part B
 
+> Status: legacy switch-point/reporting reference. Keep this contract for prior paired-intervention reporting and fixture discipline. New zone-control evaluation/reporting work should be defined under the zone-control RL MVP issue sequence and should not treat density-matched single-cell intervention rows as the main evidence path.
+
 Part B is reporting-only. It defines the CSV surface and plotting behavior before the custom C/Ocean forest-fire environment exists.
 
 This slice must not change environment physics. The future C/Ocean implementation only needs to emit rows matching this contract.

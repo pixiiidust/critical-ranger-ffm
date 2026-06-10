@@ -4,6 +4,22 @@ Critical Ranger FFM is a control-of-SOC experiment. It uses reinforcement-learni
 
 ## Language
 
+**Zone-Control RL MVP**:
+The current main roadmap: an RL policy manages forest zones over time and is judged against honest simple baselines on mega-fire reduction while preserving acceptable forest density and intervention budget. It supersedes the switch-point single-cell efficacy path as the main roadmap.
+_Avoid_: Single-cell efficacy as the main proof, density-matched cell controls as the core experiment, real wildfire policy claim
+
+**Diagnostic Switch-Point Infrastructure**:
+The parked legacy/prototype path from the switch-point PRD. Its branch/replay, reporting, matching diagnostics, and non-claim discipline remain useful, but it is no longer the main science roadmap.
+_Avoid_: Deleted work, failed work, current main roadmap
+
+**Zone Thinning Action**:
+The V1 active intervention for the zone-control MVP: choose exactly one treatment zone at a decision tick and thin it according to the environment contract. V1 also includes no-op.
+_Avoid_: Cell action, prescribed burn, active suppression, multi-zone budget action
+
+**Mega-Fire Reduction at Acceptable Density**:
+The primary zone-control success read-out: reduce mega-fire frequency versus the strongest simple baseline while staying inside average/minimum tree-density and intervention-cost constraints.
+_Avoid_: Reward score alone, clearing the forest, beating only no-op
+
 **Critical Edge**:
 A global forest-fire regime where fire sizes show a stable heavy-tailed / power-law-like fingerprint: many small fires, rare giant fires. It is judged from fire-size statistics, not from tree-count reward alone.
 _Avoid_: Good score, high reward, stable forest
@@ -101,8 +117,8 @@ The ranger must choose the intervention cell for the leverage claim to be valid.
 _Avoid_: Random focus point, sampled action patch, hidden location choice
 
 **Global Chooser Design**:
-The v1 design where the ranger can choose any grid cell from a flat `grid_width * grid_height + no-op` action space, using a single full-resolution global one-hot grid observation. This preserves the switch-point location claim while avoiding dual-stream global/local wiring.
-_Avoid_: Random local patch chooser, downsampled-only global observation, factored row/column action for v1
+The parked switch-point diagnostic design where the ranger can choose any grid cell from a flat `grid_width * grid_height + no-op` action space, using a single full-resolution global one-hot grid observation. This preserves the old switch-point location claim, but it is no longer the default V1 for the zone-control RL MVP.
+_Avoid_: Current zone-control V1 action model, random local patch chooser, downsampled-only global observation, factored row/column action for v1
 
 **Factored Action**:
 A deferred action encoding that chooses row and column separately. It is not v1 because switch points are specific `(row, col)` cells and row/column independence can distort the claim.

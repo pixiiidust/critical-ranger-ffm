@@ -1,5 +1,7 @@
 # PRD: Real Unmanaged FFM Environment and Baseline Gates
 
+> Status: retained environment/measurement spine. This PRD still governs unmanaged forest-fire physics, cluster measurement, reproducibility, and baseline smoke discipline. The agent/control roadmap has pivoted to `docs/PRD-zone-control-rl-mvp.md`.
+
 ## Problem Statement
 
 C1 proved that Jamie's local WSL / GTX 1070 machine can build and train a PufferLib environment. That proof used a provisional shim, dummy reward, no real raylib renderer, and a small debug grid. It proved the local build/train/toolchain path, not the actual experiment or eval visuals.
