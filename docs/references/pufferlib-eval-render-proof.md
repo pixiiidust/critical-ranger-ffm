@@ -45,6 +45,26 @@ For review, record:
 - whether the command exited cleanly, timed out intentionally, or needed manual close
 - a clear note that this remains visual/debug proof, not final science
 
+## Local WSL visual proof received
+
+Jamie verified the Issue #20 direct visual render smoke on local WSL after building raylib in user space and rebuilding/probing the extension with raylib available.
+
+User visual report:
+
+> oh yes i see it now - dark gray, green and orange bands
+
+Observed output markers:
+
+- Raylib initialized successfully with `INFO: Initializing raylib 6.1-dev`.
+- Platform backend: `DESKTOP (GLFW)` / X11.
+- Render/window size: `384 x 192`.
+- Window closed successfully.
+- `ISSUE20_RENDER_SMOKE_FRAMES:133`
+- `ISSUE20_RENDER_SMOKE_EXIT:0`
+- `ISSUE20_RENDER_COMMAND_EXIT:0`
+
+Interpretation: this is visual render proof for the optional Issue #20 debug path. It proves the raylib window can show clearly distinguishable empty/tree/burning categorical states for the real Critical Ranger FFM render code. It is not final science, not train proof, and not a checkpoint-quality claim.
+
 ## Current VPS verification
 
 CPU-safe VPS tests can compile the render path with a raylib test stub. That proves categorical draw calls and render isolation without launching Puffer, GPU, eval, train, or a real window on the VPS.
