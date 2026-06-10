@@ -15,6 +15,8 @@ class LocalWslPairedSignalProtocolTests(unittest.TestCase):
             "Do not ask Jamie to run a 100-pair signal command yet.",
             "fixture artifacts do not count as #38 evidence",
             "must produce paired CSV, Markdown report, and JSON summary from one invocation",
+            "`python3 -m critical_ranger_ffm.reporting.local_wsl_paired_signal_check`",
+            "requires a real `MODULE:CALLABLE` sample provider",
             "target `100` valid pairs with a `150` attempted-pair cap",
             "local WSL/GTX 1070 only",
             "one command at a time",

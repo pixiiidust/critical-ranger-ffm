@@ -6,7 +6,17 @@ Current command status: `blocked_no_real_sample_provider`
 
 Do not ask Jamie to run a 100-pair signal command yet.
 
-The repo has the paired runner/report seam and fixture-compatible artifact writer, but it does not yet expose a reviewed command that collects real ranger-selected switch-point samples from Jamie's local environment. fixture artifacts do not count as #38 evidence, and VPS-only tests do not count as #38 evidence.
+The repo has the paired runner/report seam and a local WSL command bridge, but it does not yet include the real sample-provider callable that collects real ranger-selected switch-point samples from Jamie's local environment. fixture artifacts do not count as #38 evidence, and VPS-only tests do not count as #38 evidence.
+
+The bridge entry point is `python3 -m critical_ranger_ffm.reporting.local_wsl_paired_signal_check`. It requires a real `MODULE:CALLABLE` sample provider that returns `SwitchPointSample` objects from the local WSL ranger/environment path. Until that provider exists and is reviewed, do not issue the command as #38 evidence.
+
+## Reviewed bridge shape once a real provider exists
+
+```bash
+PYTHONPATH=src python3 -m critical_ranger_ffm.reporting.local_wsl_paired_signal_check --sample-provider <real_provider_module>:<collect_samples_callable> --provider-root . --output-dir artifacts/issue38-local-wsl-paired-signal --target-valid-pairs 100 --attempted-pair-cap 150 --readout-horizon-steps 512
+```
+
+This is a command shape, not a runnable #38 instruction yet. Replace the placeholder only with a reviewed real local provider. Do not replace it with fixture or deterministic-only helper providers.
 
 ## What must exist before the local command is issued
 
