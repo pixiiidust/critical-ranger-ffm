@@ -118,6 +118,39 @@ int main(void) {
         self.assertNotIn("static uint64_t ffm_c1_next_u64", text)
         self.assertNotIn("dummy_reward", text)
 
+    def test_pufferlib_staged_sources_compile_from_ocean_env_directory(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            env_dir = tmp / "critical_ranger_ffm"
+            env_dir.mkdir()
+            for source in [
+                PUFFER_ENV,
+                PUFFER_BINDING,
+                UNMANAGED_SOURCE,
+                REPO / "src" / "critical_ranger_ffm" / "ffm_unmanaged.h",
+                BINDING_SOURCE,
+                BINDING_HEADER,
+            ]:
+                (env_dir / source.name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+            completed = subprocess.run(
+                [
+                    "cc",
+                    "-std=c11",
+                    "-O2",
+                    "-Wall",
+                    "-Wextra",
+                    "-pedantic",
+                    "-c",
+                    "critical_ranger_ffm.c",
+                    "binding.c",
+                ],
+                cwd=env_dir,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout)
+
     def test_pufferlib_4_build_artifacts_document_real_train_wiring_scope(self):
         config_text = PUFFER_CONFIG.read_text(encoding="utf-8")
         self.assertIn("[base]", config_text)

@@ -8,7 +8,7 @@
 // the CPU-safe binding contract is tested through ffm_c1_ocean_binding.c. The
 // local PufferLib checkout owns the generated/native Python extension glue.
 
-#include "../../../src/critical_ranger_ffm/ocean/ffm_c1_ocean_binding.h"
+#include "ffm_c1_ocean_binding.h"
 
 void c_render(void *env) {
     (void)env;

@@ -1,7 +1,17 @@
 #ifndef CRITICAL_RANGER_FFM_C1_OCEAN_BINDING_H
 #define CRITICAL_RANGER_FFM_C1_OCEAN_BINDING_H
 
-#include "../ffm_unmanaged.h"
+#if defined(__has_include)
+#  if __has_include("../ffm_unmanaged.h")
+#    include "../ffm_unmanaged.h"
+#  elif __has_include("ffm_unmanaged.h")
+#    include "ffm_unmanaged.h"
+#  else
+#    error "ffm_unmanaged.h not found"
+#  endif
+#else
+#  include "../ffm_unmanaged.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
