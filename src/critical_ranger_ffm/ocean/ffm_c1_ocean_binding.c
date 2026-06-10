@@ -44,6 +44,8 @@ int ffm_c1_ocean_init(FfmC1OceanEnv *env, const FfmC1OceanConfig *cfg) {
     if (!cr_ffm_init(&env->ffm, &cfg->ffm)) return 0;
     env->action_count = env->ffm.cell_count + 1;
     env->obs_count = env->ffm.cell_count * FFM_C1_OCEAN_OBS_CHANNELS;
+    env->gamma = cfg->gamma;
+    env->discounted_living_tree_fraction = 0.0f;
     env->obs = (float *)ffm_c1_ocean_xcalloc((size_t)env->obs_count, sizeof(float));
     ffm_c1_ocean_write_observation(env);
     return 1;
@@ -119,9 +121,15 @@ FfmC1OceanStepResult ffm_c1_ocean_step(FfmC1OceanEnv *env, int action) {
 
     result.ffm = cr_ffm_step_unmanaged(&env->ffm);
     result.truncated = result.ffm.truncated;
-    result.reward = env->ffm.cell_count > 0
+    // Issue #17 reward contract: normalized rolling discounted living-tree
+    // fraction only. No direct intervention cost and no criticality/style term.
+    float living_tree_fraction = env->ffm.cell_count > 0
         ? (float)ffm_c1_ocean_count_trees(env) / (float)env->ffm.cell_count
         : 0.0f;
+    env->discounted_living_tree_fraction =
+        env->gamma * env->discounted_living_tree_fraction +
+        (1.0f - env->gamma) * living_tree_fraction;
+    result.reward = env->discounted_living_tree_fraction;
     ffm_c1_ocean_write_observation(env);
     return result;
 }

@@ -43,6 +43,8 @@ typedef struct {
     int action_count;
     int obs_count;
     float *obs;
+    float gamma;
+    float discounted_living_tree_fraction;
 } FfmC1OceanEnv;
 
 FfmC1OceanConfig ffm_c1_ocean_default_config(void);

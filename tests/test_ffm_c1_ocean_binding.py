@@ -14,6 +14,7 @@ PUFFER_ENV_HEADER = REPO / "pufferlib" / "ocean" / "critical_ranger_ffm" / "crit
 PUFFER_BINDING = REPO / "pufferlib" / "ocean" / "critical_ranger_ffm" / "binding.c"
 BUILD_DOC = REPO / "docs" / "references" / "pufferlib-c1-real-binding-build.md"
 RENDER_PROOF_DOC = REPO / "docs" / "references" / "pufferlib-eval-render-proof.md"
+REWARD_TRUNCATION_DOC = REPO / "docs" / "references" / "ranger-reward-truncation-contract.md"
 
 
 class FfmC1OceanBindingTests(unittest.TestCase):
@@ -78,7 +79,7 @@ int main(void) {
     cfg.ffm.p = 0.0;
     cfg.ffm.f = 0.0;
     cfg.ffm.initial_tree_density = 1.0;
-    cfg.ffm.episode_step_cap = 10;
+    cfg.gamma = 0.5f;
     FfmC1OceanEnv env;
     int ok = expect(ffm_c1_ocean_init(&env, &cfg), "init");
     ok &= expect(env.ffm.cell_count == 12, "cell_count from real env");
@@ -99,7 +100,7 @@ int main(void) {
     FfmC1OceanStepResult stepped = ffm_c1_ocean_step(&env, 5);
     ok &= expect(stepped.effective_intervention == 1, "tree action removes fuel");
     ok &= expect(env.ffm.grid[5] == CR_FFM_EMPTY, "selected cell remains empty after real env step");
-    ok &= expect(fabsf(stepped.reward - (11.0f / 12.0f)) < 0.0001f, "living tree fraction reward");
+    ok &= expect(fabsf(stepped.reward - (11.0f / 24.0f)) < 0.0001f, "discounted living tree fraction reward");
 
     FfmC1OceanStepResult noop = ffm_c1_ocean_step(&env, env.action_count - 1);
     ok &= expect(noop.effective_intervention == 0, "noop is valid no intervention");
@@ -113,6 +114,133 @@ int main(void) {
 '''
         )
         self.assertIn("real-binding-contract: PASS", output)
+
+
+
+    def test_reward_contract_is_discounted_living_tree_fraction_without_style_or_cost_terms(self):
+        output = self.compile_and_run_harness(
+            r"""
+#include "critical_ranger_ffm/ocean/ffm_c1_ocean_binding.h"
+#include <math.h>
+#include <stdio.h>
+
+static int expect(int condition, const char *name) {
+    if (!condition) fprintf(stderr, "FAIL:%s\n", name);
+    return condition;
+}
+
+static void set_grid(FfmC1OceanEnv *env, unsigned char a, unsigned char b, unsigned char c, unsigned char d) {
+    env->ffm.grid[0] = a;
+    env->ffm.grid[1] = b;
+    env->ffm.grid[2] = c;
+    env->ffm.grid[3] = d;
+}
+
+int main(void) {
+    FfmC1OceanConfig cfg = ffm_c1_ocean_default_config();
+    cfg.ffm.grid_width = 2;
+    cfg.ffm.grid_height = 2;
+    cfg.ffm.p = 0.0;
+    cfg.ffm.f = 0.0;
+    cfg.ffm.initial_tree_density = 0.0;
+    cfg.ffm.episode_step_cap = 100;
+    cfg.gamma = 0.5f;
+    FfmC1OceanEnv env;
+    int ok = expect(ffm_c1_ocean_init(&env, &cfg), "init");
+    ok &= expect(fabsf(env.discounted_living_tree_fraction - 0.0f) < 0.0001f, "initial rolling reward is zero");
+
+    set_grid(&env, CR_FFM_TREE, CR_FFM_TREE, CR_FFM_TREE, CR_FFM_TREE);
+    FfmC1OceanStepResult first = ffm_c1_ocean_step(&env, env.action_count - 1);
+    ok &= expect(first.effective_intervention == 0, "noop has no intervention");
+    ok &= expect(fabsf(first.reward - 0.5f) < 0.0001f, "first discounted living fraction reward");
+    ok &= expect(fabsf(env.discounted_living_tree_fraction - 0.5f) < 0.0001f, "rolling reward stored on env");
+
+    FfmC1OceanEnv no_cost_a;
+    FfmC1OceanEnv no_cost_b;
+    ok &= expect(ffm_c1_ocean_init(&no_cost_a, &cfg), "no cost init a");
+    ok &= expect(ffm_c1_ocean_init(&no_cost_b, &cfg), "no cost init b");
+    set_grid(&no_cost_a, CR_FFM_EMPTY, CR_FFM_TREE, CR_FFM_TREE, CR_FFM_TREE);
+    set_grid(&no_cost_b, CR_FFM_EMPTY, CR_FFM_TREE, CR_FFM_TREE, CR_FFM_TREE);
+    FfmC1OceanStepResult ineffective_action = ffm_c1_ocean_step(&no_cost_a, 0);
+    FfmC1OceanStepResult noop = ffm_c1_ocean_step(&no_cost_b, no_cost_b.action_count - 1);
+    ok &= expect(ineffective_action.effective_intervention == 0, "empty action is ineffective");
+    ok &= expect(fabsf(ineffective_action.reward - noop.reward) < 0.0001f, "no direct intervention cost");
+
+    FfmC1OceanEnv style_a;
+    FfmC1OceanEnv style_b;
+    ok &= expect(ffm_c1_ocean_init(&style_a, &cfg), "style init a");
+    ok &= expect(ffm_c1_ocean_init(&style_b, &cfg), "style init b");
+    set_grid(&style_a, CR_FFM_TREE, CR_FFM_TREE, CR_FFM_EMPTY, CR_FFM_EMPTY);
+    set_grid(&style_b, CR_FFM_TREE, CR_FFM_EMPTY, CR_FFM_TREE, CR_FFM_EMPTY);
+    FfmC1OceanStepResult compact = ffm_c1_ocean_step(&style_a, style_a.action_count - 1);
+    FfmC1OceanStepResult separated = ffm_c1_ocean_step(&style_b, style_b.action_count - 1);
+    ok &= expect(fabsf(compact.reward - separated.reward) < 0.0001f, "no criticality or style reward term");
+
+    ffm_c1_ocean_free(&env);
+    ffm_c1_ocean_free(&no_cost_a);
+    ffm_c1_ocean_free(&no_cost_b);
+    ffm_c1_ocean_free(&style_a);
+    ffm_c1_ocean_free(&style_b);
+    if (!ok) return 1;
+    printf("reward-contract: PASS\n");
+    return 0;
+}
+"""
+        )
+        self.assertIn("reward-contract: PASS", output)
+
+    def test_puffer_step_treats_episode_cap_as_truncation_reset_not_success_or_failure(self):
+        output = self.compile_and_run_harness(
+            r"""
+#include "critical_ranger_ffm/ocean/ffm_c1_ocean_binding.h"
+#include "critical_ranger_ffm.h"
+#include <math.h>
+#include <stdio.h>
+
+static int expect(int condition, const char *name) {
+    if (!condition) fprintf(stderr, "FAIL:%s\n", name);
+    return condition;
+}
+
+int main(void) {
+    float observations[128 * 128 * FFM_C1_OCEAN_OBS_CHANNELS] = {0};
+    float action = 4.0f;
+    float reward = -1.0f;
+    float terminal = 0.0f;
+    CriticalRangerFfm env;
+    memset(&env, 0, sizeof(env));
+    env.observations = observations;
+    env.actions = &action;
+    env.rewards = &reward;
+    env.terminals = &terminal;
+    env.rng = 17;
+
+    c_reset(&env);
+    env.ocean.ffm.cfg.grid_width = 2;
+    env.ocean.ffm.cfg.grid_height = 2;
+    env.ocean.ffm.cfg.episode_step_cap = 1;
+    env.ocean.ffm.cfg.p = 0.0;
+    env.ocean.ffm.cfg.f = 0.0;
+    for (int i = 0; i < env.ocean.ffm.cell_count; i++) env.ocean.ffm.grid[i] = CR_FFM_TREE;
+
+    c_step(&env);
+
+    int ok = 1;
+    ok &= expect(terminal == 1.0f, "truncation emits puffer reset signal");
+    ok &= expect(reward >= 0.0f && reward <= 1.0f, "truncation reward remains normalized contract reward");
+    ok &= expect(env.initialized == 1, "env reset after truncation");
+    ok &= expect(env.ocean.ffm.step_count == 0, "post-truncation reset starts new continuing episode");
+    ok &= expect(env.current_return == 0.0f, "current return reset for next episode");
+    ok &= expect(env.current_length == 0.0f, "current length reset for next episode");
+    ok &= expect(env.log.effective_interventions == 0.0f, "logs do not encode terminal success failure");
+    c_close(&env);
+    if (!ok) return 1;
+    printf("truncation-contract: PASS\n");
+    return 0;
+}
+"""
+        )
+        self.assertIn("truncation-contract: PASS", output)
 
     def test_binding_source_reuses_real_unmanaged_environment_not_provisional_physics(self):
         text = BINDING_SOURCE.read_text(encoding="utf-8")
@@ -285,6 +413,25 @@ int main(void) {
         self.assertIn("ISSUE20_RENDER_COMMAND_EXIT:0", doc)
         self.assertIn("dark gray, green and orange bands", doc)
         self.assertIn("ISSUE20_RENDER_SMOKE_FRAMES:133", doc)
+        command_blocks = "\n".join(doc.split("```")[1::2])
+        self.assertNotIn("puffer train", command_blocks)
+        self.assertNotIn("puffer eval", command_blocks)
+
+
+
+    def test_reward_truncation_contract_doc_keeps_scope_narrow(self):
+        doc = REWARD_TRUNCATION_DOC.read_text(encoding="utf-8")
+        self.assertIn("Issue #17", doc)
+        self.assertIn("rolling discounted living-tree fraction", doc)
+        self.assertIn("reward_t = gamma * reward_{t-1} + (1 - gamma) * living_tree_fraction_t", doc)
+        self.assertIn("normalized to [0, 1]", doc)
+        self.assertIn("No stay-near-criticality reward", doc)
+        self.assertIn("No intervention cost", doc)
+        self.assertIn("episode caps are truncations", doc)
+        self.assertIn("Puffer terminal flag is a reset signal", doc)
+        self.assertIn("not terminal success/failure", doc)
+        self.assertIn("does not judge policy quality", doc)
+        self.assertIn("Do not run Puffer, GPU, train, eval, or render commands on the VPS", doc)
         command_blocks = "\n".join(doc.split("```")[1::2])
         self.assertNotIn("puffer train", command_blocks)
         self.assertNotIn("puffer eval", command_blocks)
