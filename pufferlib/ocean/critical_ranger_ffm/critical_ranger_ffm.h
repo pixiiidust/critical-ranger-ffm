@@ -82,7 +82,14 @@ void c_step(CriticalRangerFfm *env) {
     env->log.n += 1.0f;
 
     critical_ranger_ffm_copy_observation(env);
-    if (step.truncated) c_reset(env);
+    if (step.truncated) {
+        // Issue #17: Puffer's terminal flag is a cap/reset signal here,
+        // not terminal success/failure or a policy-quality judgment.
+        float truncated_reward = step.reward;
+        c_reset(env);
+        if (env->terminals) env->terminals[0] = 1.0f;
+        if (env->rewards) env->rewards[0] = truncated_reward;
+    }
 }
 
 #ifndef CRITICAL_RANGER_FFM_HAS_RAYLIB_RENDER
