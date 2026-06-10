@@ -1,5 +1,7 @@
 # Starting Assumptions
 
+> Status: historical grill notes for the earlier switch-point roadmap. The active roadmap is now the zone-control RL MVP in `../PRD-zone-control-rl-mvp.md`. Use this file only as background on prior decisions and terminology, not as the current implementation source of truth.
+
 These are provisional. Grill-with-docs starts by testing these, one decision at a time.
 
 ## Experiment assumptions

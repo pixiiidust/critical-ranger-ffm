@@ -1,5 +1,7 @@
 # PRD: Switch-Point Ranger Efficacy Phase
 
+> Status: parked diagnostic/prototype infrastructure. This PRD is no longer the main roadmap. The zone-control RL MVP in `docs/PRD-zone-control-rl-mvp.md` supersedes it for future implementation planning. Keep this document as a reference for branch/replay discipline, reporting contracts, matching diagnostics, and non-claim hygiene.
+
 ## Problem Statement
 
 The environment/baseline phase is complete enough to ask the next question, but not to answer it yet: does a ranger-chosen intervention produce better counterfactual outcomes than a density-matched control intervention at the same switch point?
